@@ -1,4 +1,4 @@
-# cli-template
+# magi-cli
 
 > This cli template shows the date and time in the terminal
 
@@ -7,4 +7,4 @@ This template prints the date or time to the terminal.
 
 [Installation](installation.md)
 [Docs](docs.md)
-[GitHub](https://github.com/x0f5c3/cli-template)
+[GitHub](https://github.com/MagdielCAS/magi-cli)

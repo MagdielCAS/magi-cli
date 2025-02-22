@@ -1,4 +1,4 @@
-<h1 align="center">cli-template ✨</h1>
+<h1 align="center">magi-cli ✨</h1>
 
 <p align="center">⚗ A template for beautiful, modern, cross-platform compatible CLI tools written with Go!</p>
 
@@ -11,7 +11,7 @@
 <p align="center">
 <strong><a href="#getting-started">Getting Started</a></strong>
 |
-<strong><a href="https://github.com/x0f5c3/cli-template/wiki/">Wiki</a></strong>
+<strong><a href="https://github.com/MagdielCAS/magi-cli/wiki/">Wiki</a></strong>
 </p>
 
 ----
@@ -30,7 +30,7 @@
 
 ## Getting Started
 
-**You can find an in-depth tutorial in the Wiki here: [Getting Started](https://github.com/x0f5c3/cli-template/wiki/Getting-Started)**
+**You can find an in-depth tutorial in the Wiki here: [Getting Started](https://github.com/MagdielCAS/magi-cli/wiki/Getting-Started)**
 
 1. Click on <kbd>Use this template</kbd> on the top of the page.
 1. Enable GitHub Pages and set the path to `/docs`.
@@ -58,7 +58,7 @@ Cobra is a popular CLI framework for Go.
 
 ### Automatic Releases
 
-> [Documentation link](https://github.com/x0f5c3/cli-template/wiki/Automatic-Releases)
+> [Documentation link](https://github.com/MagdielCAS/magi-cli/wiki/Automatic-Releases)
 
 Our custom made CI system will detect when you change the version of your CLI and will **automatically create a new GitHub release for you**.
 You'll never have to deploy your CLI tools manually again!
@@ -95,7 +95,7 @@ curl -sSL instl.sh/username/reponame/linux | bash
 
 ### Automatic Website Generation
 
-> [Documentation link](https://github.com/x0f5c3/cli-template/wiki/Automatic-Website-Generation)
+> [Documentation link](https://github.com/MagdielCAS/magi-cli/wiki/Automatic-Website-Generation)
 
 Every time you push a new commit, a GitHub Pages website is created/updated, which documents your whole CLI tool automatically.
 You don't need to document anything by yourself.
@@ -116,7 +116,7 @@ Your users will be notified if a new version of your tool is availble.
 
 ### Custom CI-System
 
-> [Documentation link](https://github.com/x0f5c3/cli-template/wiki/Custom-CI-System)
+> [Documentation link](https://github.com/MagdielCAS/magi-cli/wiki/Custom-CI-System)
 
 We wrote a custom CI-System, which will be included in your repository.  
 It sets up the template, creates/updates the website, writes docs for you and run your tests. (And much more!)

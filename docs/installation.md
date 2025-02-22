@@ -1,7 +1,7 @@
-# Quick Start - Install cli-template
+# Quick Start - Install magi-cli
 
 > [!TIP]
-> cli-template is installable via [instl.sh](https://instl.sh).\
+> magi-cli is installable via [instl.sh](https://instl.sh).\
 > You just have to run the following command and you're ready to go!
 
 <!-- tabs:start -->
@@ -11,7 +11,7 @@
 ### Windows Command
 
 ```powershell
-iwr instl.sh/x0f5c3/cli-template/windows | iex
+iwr instl.sh/MagdielCAS/magi-cli/windows | iex
 ```
 
 #### ** Linux **
@@ -19,7 +19,7 @@ iwr instl.sh/x0f5c3/cli-template/windows | iex
 ### Linux Command
 
 ```bash
-curl -sSL instl.sh/x0f5c3/cli-template/linux | bash
+curl -sSL instl.sh/MagdielCAS/magi-cli/linux | bash
 ```
 
 #### ** macOS **
@@ -27,7 +27,7 @@ curl -sSL instl.sh/x0f5c3/cli-template/linux | bash
 ### macOS Command
 
 ```bash
-curl -sSL instl.sh/x0f5c3/cli-template/macos | bash
+curl -sSL instl.sh/MagdielCAS/magi-cli/macos | bash
 ```
 
 #### ** Compile from source **
@@ -35,13 +35,13 @@ curl -sSL instl.sh/x0f5c3/cli-template/macos | bash
 ### Compile from source with Golang
 
 ?> **NOTICE**
-To compile cli-template from source, you have to have [Go](https://golang.org/) installed.
+To compile magi-cli from source, you have to have [Go](https://golang.org/) installed.
 
-Compiling cli-template from source has the benefit that the build command is the same on every platform.\
-It is not recommended to install Go only for the installation of cli-template.
+Compiling magi-cli from source has the benefit that the build command is the same on every platform.\
+It is not recommended to install Go only for the installation of magi-cli.
 
 ```command
-go install github.com/x0f5c3/cli-template@latest
+go install github.com/MagdielCAS/magi-cli@latest
 ```
 
 <!-- tabs:end -->
