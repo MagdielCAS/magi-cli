@@ -1,3 +1,5 @@
 # IDE specific files
 .idea
 .vscode
+# Added by goreleaser init:
+dist/
