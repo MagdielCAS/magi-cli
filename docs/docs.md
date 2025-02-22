@@ -85,7 +85,7 @@ To load completions for every new session, execute once:
 
 #### macOS:
 
-	magi-cli completion bash > /usr/local/etc/bash_completion.d/magi-cli
+	magi-cli completion bash > $(brew --prefix)/etc/bash_completion.d/magi-cli
 
 You will need to start a new shell for this setup to take effect.
 
@@ -168,6 +168,10 @@ to enable it.  You can execute the following once:
 
 	echo "autoload -U compinit; compinit" >> ~/.zshrc
 
+To load completions in your current shell session:
+
+	source <(magi-cli completion zsh)
+
 To load completions for every new session, execute once:
 
 #### Linux:
@@ -176,7 +180,7 @@ To load completions for every new session, execute once:
 
 #### macOS:
 
-	magi-cli completion zsh > /usr/local/share/zsh/site-functions/_magi-cli
+	magi-cli completion zsh > $(brew --prefix)/share/zsh/site-functions/_magi-cli
 
 You will need to start a new shell for this setup to take effect.
 
@@ -233,4 +237,4 @@ You can print a live clock with the '--live' flag!
 
 
 ---
-> **Documentation automatically generated with [PTerm](https://github.com/MagdielCAS/magi-cli) on 24 November 2022**
+> **Documentation automatically generated with [PTerm](https://github.com/pterm/cli-template) on 22 February 2025**
