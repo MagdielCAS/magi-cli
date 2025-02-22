@@ -10,6 +10,7 @@ import (
 	"os/signal"
 	"path/filepath"
 
+	"github.com/MagdielCAS/magi-cli/cmd/config"
 	"github.com/MagdielCAS/pcli"
 	"github.com/pterm/pterm"
 	"github.com/spf13/cobra"
@@ -181,6 +182,9 @@ func init() {
 
 	// Change global PTerm theme
 	pterm.ThemeDefault.SectionStyle = *pterm.NewStyle(pterm.FgCyan)
+
+	// Add config command
+	rootCmd.AddCommand(config.ConfigCmd)
 }
 
 func GetRootCmd() *cobra.Command {
