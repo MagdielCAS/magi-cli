@@ -23,8 +23,8 @@
 <img src="https://img.shields.io/github/issues/{{ .ProjectPath }}.svg?style=flat-square" alt="Issues">
 </a>
 
-<a style="text-decoration: none" href="https://opensource.org/licenses/MIT">
-<img src="https://img.shields.io/badge/License-MIT-yellow.svg?style=flat-square" alt="License: MIT">
+<a style="text-decoration: none" href="https://opensource.org/licenses/BSD-2-Clause">
+<img src="https://img.shields.io/badge/License-BSD_2--Clause-orange.svg?style=flat-square" alt="License: BSD-2">
 </a>
 
 <br/>
@@ -51,9 +51,15 @@
 
 {{ .Long }}
 
-## Installation
+## Features
 
-Run the following command in a terminal and you're ready to go!
+- 🚀 Quick setup with simple configuration
+- 🤖 AI-powered assistance for common programming tasks
+- ⚡ Fast and lightweight
+- 🛠️ Extensible command structure
+- 🔒 Secure API key management
+
+## Installation
 
 **Windows**
 ```powershell
@@ -69,3 +75,45 @@ Run the following command in a terminal and you're ready to go!
 ```bash
 {{ .InstallCommandLinux }}
 ```
+
+## Quick Start
+
+1. Set up your OpenAI API key:
+```bash
+{{ .Name }} config set api-key your-api-key
+```
+
+2. Verify installation:
+```bash
+{{ .Name }} --version
+```
+
+## Usage
+
+```bash
+{{ .Name }} [command] [flags]
+```
+
+For detailed documentation of all available commands:
+```bash
+{{ .Name }} --help
+```
+
+## Configuration
+
+{{ .Name }} uses a configuration file located at `$HOME/.{{ .Name }}/config.yaml`. You can modify settings using:
+
+```bash
+{{ .Name }} config [key] [value]
+```
+
+## Support
+
+- 📫 Report issues on [GitHub Issues](https://github.com/{{ .ProjectPath }}/issues)
+- 💬 Join discussions in [GitHub Discussions](https://github.com/{{ .ProjectPath }}/discussions)
+
+## Acknowledgments
+
+- Built with [Cobra](https://github.com/spf13/cobra)
+- Configuration managed by [Viper](https://github.com/spf13/viper)
+- Powered by OpenAI compatible APIs

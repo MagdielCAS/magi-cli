@@ -1,46 +1,43 @@
+/**
+ * Copyright © 2025 Magdiel Campelo <github.com/MagdielCAS/magi-cli>
+ * This file is part of the magi-cli
+**/
+
 package cmd
 
 import (
 	"os"
 	"os/signal"
+	"path/filepath"
 
 	"github.com/MagdielCAS/pcli"
 	"github.com/pterm/pterm"
 	"github.com/spf13/cobra"
+	"github.com/spf13/viper"
 )
 
-var rootCmd = &cobra.Command{
-	Use:   "magi-cli",
-	Short: "This cli template shows the date and time in the terminal",
-	Long: `This is a template CLI application, which can be used as a boilerplate for awesome CLI tools written in Go.
-This template prints the date or time to the terminal.`,
-	Example: `magi-cli date
-magi-cli date --format 20060102
-magi-cli time
-magi-cli time --live`,
-	Version: "v0.0.7", // <---VERSION---> Updating this version, will also create a new GitHub release.
-	// Uncomment the following lines if your bare application has an action associated with it:
-	// RunE: func(cmd *cobra.Command, args []string) error {
-	// 	// Your code here
-	//
-	// 	return nil
-	// },
-}
+var (
+	cfgFile string
+
+	rootCmd = &cobra.Command{
+		Use:   "magi",
+		Short: "A powerful AI-assisted CLI for developers",
+		Long: `magi is a command-line interface tool that leverages AI capabilities
+to enhance developer productivity. It provides various commands for code analysis,
+documentation, suggestions, and more.
+
+Use 'magi [command] --help' for more information about a command.`,
+		Example: `  magi config set api-key your-api-key`,
+		Version: "v0.1.0", // <---VERSION---> Updating this version, will also create a new GitHub tag.
+	}
+)
 
 // Execute adds all child commands to the root command and sets flags appropriately.
 // This is called by main.main(). It only needs to happen once to the rootCmd.
 func Execute() {
-	// Fetch user interrupt
-	c := make(chan os.Signal, 1)
-	signal.Notify(c, os.Interrupt)
-	go func() {
-		<-c
-		pterm.Warning.Println("user interrupt")
-		pcli.CheckForUpdates()
-		os.Exit(0)
-	}()
+	setupSignalHandler()
+	setupCompletionCmd()
 
-	// Execute cobra
 	if err := rootCmd.Execute(); err != nil {
 		pcli.CheckForUpdates()
 		os.Exit(1)
@@ -49,12 +46,118 @@ func Execute() {
 	pcli.CheckForUpdates()
 }
 
-func init() {
-	// Adds global flags for PTerm settings.
-	// Fill the empty strings with the shorthand variant (if you like to have one).
+func setupSignalHandler() {
+	c := make(chan os.Signal, 1)
+	signal.Notify(c, os.Interrupt)
+	go func() {
+		<-c
+		pterm.Warning.Println("user interrupt")
+		pcli.CheckForUpdates()
+		os.Exit(0)
+	}()
+}
+
+func setupCompletionCmd() {
+	completionCmd := &cobra.Command{
+		Use:   "completion [bash|zsh|fish]",
+		Short: "Generate completion script",
+		Long: `To load completions:
+
+Bash:
+  $ source <(magi completion bash)
+
+Zsh:
+  # If shell completion is not already enabled in your environment:
+  $ echo "autoload -U compinit; compinit" >> ~/.zshrc
+
+  # To load completions for each session:
+  $ magi completion zsh > "${fpath[1]}/_magi"
+
+Fish:
+  $ magi completion fish | source
+
+  # To load completions for each session:
+  $ magi completion fish > ~/.config/fish/completions/magi.fish
+`,
+		DisableFlagsInUseLine: true,
+		ValidArgs:             []string{"bash", "zsh", "fish"},
+		Args:                  cobra.MatchAll(cobra.ExactArgs(1), cobra.OnlyValidArgs),
+		Run: func(cmd *cobra.Command, args []string) {
+			switch args[0] {
+			case "bash":
+				cmd.Root().GenBashCompletion(os.Stdout)
+			case "zsh":
+				cmd.Root().GenZshCompletion(os.Stdout)
+			case "fish":
+				cmd.Root().GenFishCompletion(os.Stdout, true)
+			}
+		},
+	}
+
+	rootCmd.AddCommand(completionCmd)
+}
+
+func initConfig() {
+	setupPTermFlags()
+	setupConfigFile()
+	setupViper()
+}
+
+func setupPTermFlags() {
 	rootCmd.PersistentFlags().BoolVarP(&pterm.PrintDebugMessages, "debug", "", false, "enable debug messages")
-	rootCmd.PersistentFlags().BoolVarP(&pterm.RawOutput, "raw", "", false, "print unstyled raw output (set it if output is written to a file)")
+	rootCmd.PersistentFlags().BoolVarP(&pterm.RawOutput, "raw", "", false, "print unstyled raw output")
 	rootCmd.PersistentFlags().BoolVarP(&pcli.DisableUpdateChecking, "disable-update-checks", "", false, "disables update checks")
+}
+
+func setupConfigFile() {
+	if cfgFile != "" {
+		viper.SetConfigFile(cfgFile)
+		return
+	}
+
+	home, err := os.UserHomeDir()
+	cobra.CheckErr(err)
+
+	configDir := filepath.Join(home, ".magi")
+	if err := os.MkdirAll(configDir, 0755); err != nil {
+		pterm.Error.Printf("Error creating config directory: %v\n", err)
+		os.Exit(1)
+	}
+
+	viper.SetConfigName("config")
+	viper.SetConfigType("yaml")
+	viper.AddConfigPath(configDir)
+	viper.AddConfigPath("$HOME/.magi")
+	viper.AddConfigPath(".")
+}
+
+func setupViper() {
+	viper.AutomaticEnv()
+
+	if err := viper.ReadInConfig(); err != nil {
+		if _, ok := err.(viper.ConfigFileNotFoundError); ok {
+			if err = viper.SafeWriteConfig(); err != nil {
+				pterm.Error.Printf("Error creating config file: %v\n", err)
+				os.Exit(1)
+			}
+			pterm.Success.Println("New config file created")
+		} else {
+			pterm.Error.Printf("Error reading config file: %v\n", err)
+			os.Exit(1)
+		}
+	}
+
+	pterm.Debug.Printf("Using config file: %s\n", viper.ConfigFileUsed())
+}
+
+func init() {
+	cobra.OnInitialize(initConfig)
+
+	rootCmd.PersistentFlags().StringVar(&cfgFile, "config", "", "config file (default is $HOME/.magi/config.yaml)")
+	rootCmd.PersistentFlags().StringP("author", "", "Magdiel Campelo <github.com/MagdielCAS>", "author name for copyright attribution")
+
+	viper.BindPFlag("author", rootCmd.PersistentFlags().Lookup("author"))
+	viper.SetDefault("license", "bsd-2")
 
 	// Use https://github.com/pterm/pcli to style the output of cobra.
 	pcli.SetRepo("MagdielCAS/magi-cli")
