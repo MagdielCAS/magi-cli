@@ -1,4 +1,4 @@
-module github.com/x0f5c3/cli-template/setup
+module github.com/MagdielCAS/magi-cli/setup
 
 go 1.21
 

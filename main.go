@@ -1,6 +1,6 @@
 package main
 
-import "github.com/x0f5c3/cli-template/cmd"
+import "github.com/MagdielCAS/magi-cli/cmd"
 
 func main() {
 	cmd.Execute()
