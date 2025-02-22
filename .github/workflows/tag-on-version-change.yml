@@ -10,7 +10,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Update Version
-        uses: x0f5c3/tag-action@main
+        uses: pterm/tag-action@main
         env:
           ACCESS_TOKEN: ${{ secrets.REPO_ACCESS_TOKEN }}
           ROOT_CMD: ./cmd/root.go
