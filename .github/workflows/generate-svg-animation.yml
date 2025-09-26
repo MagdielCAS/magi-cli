@@ -18,6 +18,11 @@ jobs:
         with:
           fetch-depth: 0
 
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: ^1.25
+
       - name: Set up Node.js
         uses: actions/setup-node@v3
         with:
@@ -30,8 +35,7 @@ jobs:
         run: npm install -g svg-term-cli
 
       - name: Generate SVG animation
-        run: |
-          svg-term --command="./scripts/examples.sh" --out=docs/_assets/magi-cli-animation.svg --window --no-cursor --no-optimize --profile "./scripts/terminal-theme.txt" --term "iterm2"
+        run: make svg-animation
 
       - name: Commit generated SVG
         uses: stefanzweifel/git-auto-commit-action@v4

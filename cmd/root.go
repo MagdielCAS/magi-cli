@@ -43,7 +43,7 @@ Examples:
 
 Run 'magi [command] --help' for more information on a specific command.`,
 		Example: `  magi config set api-key your-api-key`,
-		Version: "v0.1.0", // <---VERSION---> Updating this version, will also create a new GitHub tag.
+		Version: "v0.1.1", // <---VERSION---> Updating this version, will also create a new GitHub tag.
 	}
 )
 

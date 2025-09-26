@@ -30,3 +30,6 @@ test_covpage: test_codecov
 
 test_reconnect:
 	GO_ENV=test go test -tags=reconnect -short ./...
+
+svg-animation: build
+	npx svg-term-cli --command="./scripts/examples.sh" --out=docs/_assets/magi-cli-animation.svg --window --no-cursor --no-optimize --profile "./scripts/terminal-theme.txt" --term "iterm2"

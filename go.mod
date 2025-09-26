@@ -1,8 +1,6 @@
 module github.com/MagdielCAS/magi-cli
 
-go 1.21.0
-
-toolchain go1.24.5
+go 1.25.0
 
 require (
 	github.com/MagdielCAS/pcli v0.5.1
