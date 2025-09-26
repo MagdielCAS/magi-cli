@@ -1,8 +1,12 @@
+# yaml-language-server: $schema=https://goreleaser.com/static/schema.json
 version: 2
 
 before:
   hooks:
     - go mod tidy
+    # Generate CLI documentation
+    - go run ./internal/tools/docgen -out ./docs/cli -format markdown -frontmatter
+
 
 gomod:
   proxy: true
@@ -15,7 +19,6 @@ builds:
       - windows
       - darwin
     goarch:
-      - 386
       - amd64
       - arm
       - arm64
@@ -23,21 +26,37 @@ builds:
     flags:
       - -trimpath
     ldflags:
-      - -s -w -X main.version={{.Version}} -X main.commit={{.Commit}} -X main.date={{ .CommitDate }} -X main.builtBy=pterm
-
+      - -s -w 
+      - -X magi-cli/cmd.version={{.Version}}
+      - -X magi-cli/cmd.commit={{.Commit}}
+      - -X magi-cli/cmd.date={{.Date}}
+    main: ./main.go
+    binary: magi
 archives:
   - name_template: >-
       {{ .ProjectName }}_
       {{- title .Os }}_
       {{- if eq .Arch "amd64" }}x86_64
-      {{- else if eq .Arch "386" }}i386
       {{- else }}{{ .Arch }}{{ end }}
       {{- if .Arm }}v{{ .Arm }}{{ end }}
-    # use zip for windows archives
-    format_overrides:
-      - goos: windows
-        formats: [ zip ]
-
+    files:
+      - LICENSE*
+      - README*
+      - CHANGELOG*
+      - install.sh
+      - docs/*
+      - src: install.sh
+        info:
+          mtime: "{{ .CommitDate }}"
+          mode: 0755
+  # use zip for windows archives
+  - format_overrides:
+    - goos: windows
+      format: zip
+checksum:
+  name_template: '{{ .ProjectName }}_checksums.txt'
+snapshot:
+  version_template: "{{ incpatch .Version }}-next"
 changelog:
   sort: asc
   filters:
@@ -45,10 +64,6 @@ changelog:
       - '^docs'
       - '^test'
       - '^ci'
-      - '^refactor'
       - Merge pull request
       - Merge branch
       - go mod tidy
-
-checksum:
-  name_template: '{{ .ProjectName }}_checksums.txt'

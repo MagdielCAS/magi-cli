@@ -49,8 +49,16 @@
 
 ----
 
-This is a template CLI application, which can be used as a boilerplate for awesome CLI tools written in Go.
-This template prints the date or time to the terminal.
+magi-cli is a command-line interface tool designed to enhance programmer productivity by leveraging AI capabilities. Built with Go, it provides a suite of commands that help automate and streamline common programming tasks.
+
+## Key Features
+
+- AI-assisted code generation
+- Smart code analysis
+- Project scaffolding
+- Documentation assistance
+- Code review suggestions
+- And more...
 
 ## Installation
 

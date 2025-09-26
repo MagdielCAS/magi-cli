@@ -1,0 +1,41 @@
+name: Generate SVG Animation
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'scripts/examples.sh'
+      - '.github/workflows/generate-svg-animation.yml'
+
+jobs:
+  generate-svg:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '20'
+
+      - name: Install asciinema
+        run: sudo apt-get update && sudo apt-get install -y asciinema
+
+      - name: Install svg-term-cli
+        run: npm install -g svg-term-cli
+
+      - name: Generate SVG animation
+        run: |
+          svg-term --command="./scripts/examples.sh" --out=docs/_assets/magi-cli-animation.svg --window --no-cursor --no-optimize --profile "./scripts/terminal-theme.txt" --term "iterm2"
+
+      - name: Commit generated SVG
+        uses: stefanzweifel/git-auto-commit-action@v4
+        with:
+          commit_message: 'docs: update SVG animation'
+          file_pattern: 'docs/_assets/magi-cli-animation.svg'
+

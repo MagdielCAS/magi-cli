@@ -49,15 +49,20 @@
 
 ----
 
-{{ .Long }}
+## Demo
 
-## Features
+![magi-cli animation](docs/_assets/magi-cli-animation.svg)
 
-- 🚀 Quick setup with simple configuration
-- 🤖 AI-powered assistance for common programming tasks
-- ⚡ Fast and lightweight
-- 🛠️ Extensible command structure
-- 🔒 Secure API key management
+magi-cli is a command-line interface tool designed to enhance programmer productivity by leveraging AI capabilities. Built with Go, it provides a suite of commands that help automate and streamline common programming tasks.
+
+## Key Features
+
+- AI-assisted code generation
+- Smart code analysis
+- Project scaffolding
+- Documentation assistance
+- Code review suggestions
+- And more...
 
 ## Installation
 

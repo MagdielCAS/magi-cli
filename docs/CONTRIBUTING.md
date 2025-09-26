@@ -19,6 +19,55 @@ We use GitHub to host code, to track issues and feature requests, as well as acc
 5. Make sure your code lints
 6. Issue that pull request!
 
+## Follow the Code Pattern
+
+Follow the established pattern used in commands. Here's what to include:
+
+**Command Structure:**
+
+- Use descriptive `Use`, `Short`, and `Long` fields
+- Provide clear usage examples
+- Include comprehensive help text
+- Follow the pattern of having subcommands when appropriate
+- Implement a default behavior when no subcommand is specified
+
+**Example from crypto command:**
+```go
+var newCmd = &cobra.Command{
+    Use:   "new-command",
+    Short: "Short description",
+    Long: `Detailed command description.
+
+Available subcommands:
+  subcommand1     Description of subcommand1
+  subcommand2     Description of subcommand2
+
+Usage:
+  magi new-command [command]
+
+Examples:
+  # Default behavior
+  magi new-command
+
+  # Using some subcommand
+  magi new-command subcommand1
+
+Run 'magi new-command [command] --help' for more information on a specific command.`,
+    Run: func(cmd *cobra.Command, args []string) {
+        // Default behavior implementation
+    },
+}
+```
+
+### Command Documentation
+
+Ensure the command includes:
+
+- Clear and concise descriptions
+- Information about subcommands
+- Default behavior explanation
+- Usage examples
+
 ## Pull Request Process
 
 1. Update the README.md with details of changes to the interface, if applicable
@@ -29,9 +78,9 @@ We use GitHub to host code, to track issues and feature requests, as well as acc
 
 In short, when you submit code changes, your submissions are understood to be under the same [BSD 2-Clause License](LICENSE) that covers the project. Feel free to contact the maintainers if that's a concern.
 
-## Report bugs using GitHub's [issue tracker](https://github.com/yourusername/magi-cli/issues)
+## Report bugs using GitHub's [issue tracker](https://github.com/MagdielCAS/magi-cli/issues)
 
-We use GitHub issues to track public bugs. Report a bug by [opening a new issue](https://github.com/yourusername/magi-cli/issues/new); it's that easy!
+We use GitHub issues to track public bugs. Report a bug by [opening a new issue](https://github.com/MagdielCAS/magi-cli/issues/new); it's that easy!
 
 ## Write bug reports with detail, background, and sample code
 
@@ -44,6 +93,32 @@ We use GitHub issues to track public bugs. Report a bug by [opening a new issue]
 - What you expected would happen
 - What actually happens
 - Notes (possibly including why you think this might be happening, or stuff you tried that didn't work)
+
+## Developer Certificate of Origin
+
+By making a contribution to this project, I certify that:
+
+(a) The contribution was created in whole or in part by me and I
+    have the right to submit it under the open source license
+    indicated in the file; or
+
+(b) The contribution is based upon previous work that, to the best
+    of my knowledge, is covered under an appropriate open source
+    license and I have the right under that license to submit that
+    work with modifications, whether created in whole or in part
+    by me, under the same open source license (unless I am
+    permitted to submit under a different license), as indicated
+    in the file; or
+
+(c) The contribution was provided directly to me by some other
+    person who certified (a), (b) or (c) and I have not modified
+    it.
+
+(d) I understand and agree that this project and the contribution
+    are public and that a record of the contribution (including all
+    personal information I submit with it, including my sign-off) is
+    maintained indefinitely and may be redistributed consistent with
+    this project or the open source license(s) involved.
 
 ## License
 

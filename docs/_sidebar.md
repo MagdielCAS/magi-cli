@@ -1,7 +1,10 @@
-- [Installation](installation.md)
+- [CODE OF CONDUCT](CODE_OF_CONDUCT.md)
+- [CONTRIBUTING](CONTRIBUTING.md)
+- [README](README.md)
+- [ coverpage.Template](_coverpage.template.md)
+- [Commands](commands.md)
+- [Configuration](configuration.md)
 - [Docs](docs.md)
-
----
-
-- [Contributing](CONTRIBUTING.md)
-- [Code of Conduct](CODE_OF_CONDUCT.md)
+- [Getting Started](getting-started.md)
+- [Installation](installation.md)
+- [Installation.Template](installation.template.md)

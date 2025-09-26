@@ -21,12 +21,27 @@ var (
 
 	rootCmd = &cobra.Command{
 		Use:   "magi",
-		Short: "A powerful AI-assisted CLI for developers",
+		Short: "A powerful AI-assisted CLI for developers that enhances productivity",
 		Long: `magi is a command-line interface tool that leverages AI capabilities
 to enhance developer productivity. It provides various commands for code analysis,
 documentation, suggestions, and more.
 
-Use 'magi [command] --help' for more information about a command.`,
+Available Commands:
+  setup         Initial setup of magi
+  config        Manage magi configuration
+  completion    Generate completion script
+
+Usage:
+  magi [command]
+
+Examples:
+  # Run the setup wizard
+  magi setup
+
+  # Configure your API key
+  magi config set api-key your-api-key
+
+Run 'magi [command] --help' for more information on a specific command.`,
 		Example: `  magi config set api-key your-api-key`,
 		Version: "v0.1.0", // <---VERSION---> Updating this version, will also create a new GitHub tag.
 	}
@@ -166,4 +181,8 @@ func init() {
 
 	// Change global PTerm theme
 	pterm.ThemeDefault.SectionStyle = *pterm.NewStyle(pterm.FgCyan)
+}
+
+func GetRootCmd() *cobra.Command {
+	return rootCmd
 }

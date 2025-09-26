@@ -1,29 +1,57 @@
 # Commands Reference
 
-This document provides detailed information about all available magi-cli commands.
+This document provides detailed information about all available magi commands.
 
 ## Global Flags
 
-- `--config`: Path to config file (default is $HOME/.magi-cli/config.yaml)
-- `--verbose`: Enable verbose output
+- `--config`: Path to config file (default is $HOME/.magi/config.yaml)
+- `--author`: Author name for copyright attribution
+- `--debug`: Enable debug messages
+- `--raw`: Print unstyled raw output
+- `--disable-update-checks`: Disables update checks
 - `--help`: Help for any command
 - `--version`: Display version information
 
 ## Core Commands
 
-### config
+### setup
 
-Manage magi-cli configuration.
+Starts an interactive setup wizard for magi.
+
+The setup command starts an interactive wizard to help you configure magi for first use.
+It will guide you through setting up your API key and other preferences.
 
 ```bash
-# Set API key
-magi-cli config set api-key <your-api-key>
+# Run the interactive setup wizard
+magi setup
+```
 
-# Get current configuration
-magi-cli config get
+### completion
 
-# Reset configuration
-magi-cli config reset
+Generate completion script for your shell.
+
+To load completions:
+
+**Bash:**
+```bash
+source <(magi completion bash)
+```
+
+**Zsh:**
+```bash
+# If shell completion is not already enabled in your environment:
+echo "autoload -U compinit; compinit" >> ~/.zshrc
+
+# To load completions for each session:
+magi completion zsh > "${fpath[1]}/_magi"
+```
+
+**Fish:**
+```bash
+magi completion fish | source
+
+# To load completions for each session:
+magi completion fish > ~/.config/fish/completions/magi.fish
 ```
 
 ### analyze
@@ -31,35 +59,11 @@ magi-cli config reset
 Analyze code and provide insights.
 
 ```bash
-magi-cli analyze [file/directory] [flags]
+magi analyze [file/directory] [flags]
 
 Flags:
   -d, --depth int     Analysis depth level (default 1)
   -f, --format string Output format (json|yaml|text) (default "text")
-```
-
-### suggest
-
-Get AI-powered code suggestions.
-
-```bash
-magi-cli suggest [file] [flags]
-
-Flags:
-  -c, --context int   Lines of context to include (default 5)
-  -t, --type string   Suggestion type (refactor|optimize|secure)
-```
-
-### doc
-
-Generate or modify documentation.
-
-```bash
-magi-cli doc [command] [flags]
-
-Available Commands:
-  generate    Generate documentation for code
-  update      Update existing documentation
 ```
 
 ## Additional Commands
