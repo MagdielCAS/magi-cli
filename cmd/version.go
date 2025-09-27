@@ -45,7 +45,7 @@ func runVersion(cmd *cobra.Command, args []string) {
 }
 
 func printVersion() {
-	pterm.DefaultSection.Printf("PETE CLI Version: %s", version)
+	pterm.DefaultSection.Printf("magi CLI Version: %s", version)
 
 	// Create a table for detailed version info
 	tableData := pterm.TableData{
@@ -60,7 +60,7 @@ func printVersion() {
 }
 
 func printVersionJSON() {
-	msg := fmt.Sprintf("PETE CLI Version: %s", version)
+	msg := fmt.Sprintf("magi CLI Version: %s", version)
 	data := map[string]any{
 		"version":   version,
 		"commit":    commit,
