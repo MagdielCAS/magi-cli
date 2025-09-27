@@ -10,7 +10,6 @@ import (
 	"os/signal"
 	"path/filepath"
 
-	"github.com/MagdielCAS/magi-cli/cmd/config"
 	"github.com/MagdielCAS/pcli"
 	"github.com/pterm/pterm"
 	"github.com/spf13/cobra"
@@ -19,6 +18,10 @@ import (
 
 var (
 	cfgFile string
+	// These variables are set at build time using ldflags
+	version = "dev"
+	commit  = "none"
+	date    = "unknown"
 
 	rootCmd = &cobra.Command{
 		Use:   "magi",
@@ -44,7 +47,7 @@ Examples:
 
 Run 'magi [command] --help' for more information on a specific command.`,
 		Example: `  magi config set api-key your-api-key`,
-		Version: "v0.1.1", // <---VERSION---> Updating this version, will also create a new GitHub tag.
+		Version: "v0.2.0", // <---VERSION---> Updating this version, will also create a new GitHub tag.
 	}
 )
 
@@ -182,9 +185,6 @@ func init() {
 
 	// Change global PTerm theme
 	pterm.ThemeDefault.SectionStyle = *pterm.NewStyle(pterm.FgCyan)
-
-	// Add config command
-	rootCmd.AddCommand(config.ConfigCmd)
 }
 
 func GetRootCmd() *cobra.Command {

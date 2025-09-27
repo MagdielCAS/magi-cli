@@ -12,16 +12,19 @@ import (
 	"github.com/spf13/viper"
 )
 
-var getCmd = &cobra.Command{
+var GetCmd = &cobra.Command{
 	Use:   "get [key]",
-	Short: "Get a configuration value",
-	Long: `Retrieve the value of a specific configuration key.
-	
-Example keys:
-- api.key
-- api.model
-- output.format
-- cache.enabled`,
+	Short: "Gets a configuration value",
+	Long: `Gets a configuration value.
+
+Usage:
+  magi config get [key]
+
+Examples:
+  # Get the value of a key
+  magi config get api.model
+
+Run 'magi config get --help' for more information on a specific command.`,
 	Args: cobra.ExactArgs(1),
 	Run:  runGet,
 }
