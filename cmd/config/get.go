@@ -41,11 +41,11 @@ func runGet(cmd *cobra.Command, args []string) {
 
 	// Handle sensitive data
 	if key == "api.key" {
-		fmt.Printf("%s: %s\n", key, maskAPIKey(fmt.Sprintf("%v", value)))
+		pterm.Success.Printfln("%s: %s\n", key, maskAPIKey(fmt.Sprintf("%v", value)))
 		return
 	}
 
-	fmt.Printf("%s: %v\n", key, value)
+	pterm.Success.Printfln("%s: %v\n", key, value)
 }
 
 func maskAPIKey(key string) string {

@@ -33,6 +33,7 @@ func runReset(cmd *cobra.Command, args []string) {
 	// Set default values
 	defaults := map[string]interface{}{
 		"api": map[string]interface{}{
+			"key":      apiKey,
 			"model":    "gpt-3.5-turbo",
 			"endpoint": "https://api.openai.com/v1",
 		},
@@ -49,11 +50,6 @@ func runReset(cmd *cobra.Command, args []string) {
 
 	// Clear current config
 	viper.Reset()
-
-	// Restore API key if it existed
-	if apiKey != "" {
-		viper.Set("api.key", apiKey)
-	}
 
 	// Set new defaults
 	for k, v := range defaults {
