@@ -12,11 +12,19 @@ import (
 	"github.com/spf13/viper"
 )
 
-var listCmd = &cobra.Command{
+var ListCmd = &cobra.Command{
 	Use:   "list",
-	Short: "List all configuration settings",
-	Long: `Display all current configuration settings.
-Note: Sensitive information like API keys will be masked.`,
+	Short: "Lists all configuration values",
+	Long: `Lists all configuration values.
+
+Usage:
+  magi config list
+
+Examples:
+  # List all values
+  magi config list
+
+Run 'magi config list --help' for more information on a specific command.`,
 	Run: runList,
 }
 

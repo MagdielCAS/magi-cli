@@ -10,20 +10,19 @@ import (
 	"github.com/spf13/viper"
 )
 
-var setCmd = &cobra.Command{
+var SetCmd = &cobra.Command{
 	Use:   "set [key] [value]",
-	Short: "Set a configuration value",
-	Long: `Set the value for a specific configuration key.
-	
-Common configuration keys:
-- api.key: Your OpenAI API key
-- api.model: AI model to use (e.g., gpt-4, gpt-3.5-turbo)
-- output.format: Output format (text, json, yaml)
-- cache.enabled: Enable/disable caching (true/false)
-- cache.ttl: Cache time-to-live in seconds`,
-	Example: `  magi-cli config set api.key your-api-key
-  magi-cli config set api.model gpt-4
-  magi-cli config set output.format json`,
+	Short: "Sets a configuration value",
+	Long: `Sets a configuration value.
+
+Usage:
+  magi config set [key] [value]
+
+Examples:
+  # Set the value of a key
+  magi config set api.model gpt-4
+
+Run 'magi config set --help' for more information on a specific command.`,
 	Args: cobra.ExactArgs(2),
 	Run:  runSet,
 }

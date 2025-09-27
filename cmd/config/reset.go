@@ -10,11 +10,19 @@ import (
 	"github.com/spf13/viper"
 )
 
-var resetCmd = &cobra.Command{
+var ResetCmd = &cobra.Command{
 	Use:   "reset",
-	Short: "Reset configuration to default values",
-	Long: `Reset all configuration settings to their default values.
-This will not remove your API key.`,
+	Short: "Resets the configuration",
+	Long: `Resets the configuration to its default values.
+
+Usage:
+  magi config reset
+
+Examples:
+  # Reset the configuration
+  magi config reset
+
+Run 'magi config reset --help' for more information on a specific command.`,
 	Run: runReset,
 }
 
