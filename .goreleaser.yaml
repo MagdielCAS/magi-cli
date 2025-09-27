@@ -4,9 +4,6 @@ version: 2
 before:
   hooks:
     - go mod tidy
-    # Generate CLI documentation
-    - go run ./internal/tools/docgen -out ./docs/cli -format markdown -frontmatter
-
 
 gomod:
   proxy: true
@@ -20,7 +17,6 @@ builds:
       - darwin
     goarch:
       - amd64
-      - arm
       - arm64
     mod_timestamp: '{{ .CommitTimestamp }}'
     flags:
@@ -30,6 +26,7 @@ builds:
       - -X magi-cli/cmd.version={{.Version}}
       - -X magi-cli/cmd.commit={{.Commit}}
       - -X magi-cli/cmd.date={{.Date}}
+      - -X magi-cli/cmd.builtBy={{.BuiltBy}}
     main: ./main.go
     binary: magi
 archives:
@@ -39,6 +36,9 @@ archives:
       {{- if eq .Arch "amd64" }}x86_64
       {{- else }}{{ .Arch }}{{ end }}
       {{- if .Arm }}v{{ .Arm }}{{ end }}
+  - format_overrides:
+    - goos: windows
+      format: zip
     files:
       - LICENSE*
       - README*
@@ -49,10 +49,6 @@ archives:
         info:
           mtime: "{{ .CommitDate }}"
           mode: 0755
-  # use zip for windows archives
-  - format_overrides:
-    - goos: windows
-      format: zip
 checksum:
   name_template: '{{ .ProjectName }}_checksums.txt'
 snapshot:
