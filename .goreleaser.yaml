@@ -36,9 +36,9 @@ archives:
       {{- if eq .Arch "amd64" }}x86_64
       {{- else }}{{ .Arch }}{{ end }}
       {{- if .Arm }}v{{ .Arm }}{{ end }}
-  - format_overrides:
-    - goos: windows
-      format: zip
+    format_overrides:
+      - goos: windows
+        formats: [ 'zip' ]
     files:
       - LICENSE*
       - README*
