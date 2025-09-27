@@ -43,17 +43,15 @@ archives:
       - LICENSE*
       - README*
       - CHANGELOG*
-      - install.sh
       - docs/*
-      - src: install.sh
-        info:
-          mtime: "{{ .CommitDate }}"
-          mode: 0755
 checksum:
   name_template: '{{ .ProjectName }}_checksums.txt'
 snapshot:
   version_template: "{{ incpatch .Version }}-next"
 changelog:
+  use: github
+  format: "{{.SHA}}: {{.Message}} (@{{.AuthorUsername}})"
+  abbrev: -1
   sort: asc
   filters:
     exclude:
