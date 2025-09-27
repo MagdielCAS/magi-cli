@@ -23,10 +23,10 @@ builds:
       - -trimpath
     ldflags:
       - -s -w 
-      - -X magi-cli/cmd.version={{.Version}}
-      - -X magi-cli/cmd.commit={{.Commit}}
-      - -X magi-cli/cmd.date={{.Date}}
-      - -X magi-cli/cmd.builtBy={{.BuiltBy}}
+      - -X github.com/MagdielCAS/magi-cli/cmd.version={{.Version}}
+      - -X github.com/MagdielCAS/magi-cli/cmd.commit={{.Commit}}
+      - -X github.com/MagdielCAS/magi-cli/cmd.date={{.Date}}
+      - -X github.com/MagdielCAS/magi-cli/cmd.builtBy=pterm
     main: ./main.go
     binary: magi
 archives:
