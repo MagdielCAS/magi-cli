@@ -4,7 +4,7 @@ go 1.25.1
 
 require (
 	github.com/MagdielCAS/pcli v0.5.1
-	github.com/pterm/pterm v0.12.81
+	github.com/pterm/pterm v0.12.82
 	github.com/spf13/cobra v1.10.1
 	github.com/spf13/viper v1.19.0
 	github.com/stretchr/testify v1.11.1
