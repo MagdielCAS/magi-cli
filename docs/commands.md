@@ -66,6 +66,36 @@ Flags:
   -f, --format string Output format (json|yaml|text) (default "text")
 ```
 
+### commit
+
+Generate an AI-assisted conventional commit message for staged or selected files and create the commit.
+
+```bash
+# Use currently staged files
+magi commit
+
+# Select unstaged files interactively and let magi commit them
+magi commit
+```
+
+Security callout:
+- Sends only the git diff for the selected files to your configured AI provider in order to craft the commit message.
+- No other project metadata or secrets leave your machine.
+- Warns when a local pre-commit hook is detected and surfaces the hook output if it blocks the commit so you can fix the reported issues.
+
+### push
+
+Push the current branch to its upstream remote. magi automatically detects when the branch has no upstream configured and re-runs the push with `--set-upstream` so you only invoke the command once.
+
+```bash
+# Push normally; magi will add --set-upstream the first time
+magi push
+```
+
+Security callout:
+- Relies entirely on your local git installation; no new data is sent to remote services beyond what git already transmits for a push.
+- Warns when a pre-push hook exists and prints the hook output if the hook blocks the push.
+
 ## Additional Commands
 
 [More commands will be added as they are implemented]
