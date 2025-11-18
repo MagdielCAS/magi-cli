@@ -16,6 +16,7 @@ import (
 
 	"github.com/MagdielCAS/magi-cli/pkg/llm"
 	"github.com/MagdielCAS/magi-cli/pkg/shared"
+	"github.com/MagdielCAS/magi-cli/pkg/utils"
 	"github.com/pterm/pterm"
 	"github.com/spf13/cobra"
 )
@@ -91,7 +92,7 @@ func runCommit(cmd *cobra.Command, _ []string) error {
 		return err
 	}
 
-	message = normalizeCommitMessage(message)
+	message = utils.RemoveCodeBlock(message)
 	if err := validateCommitFormat(message); err != nil {
 		return fmt.Errorf("invalid commit message from provider: %w", err)
 	}
