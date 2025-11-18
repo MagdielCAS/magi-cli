@@ -19,7 +19,7 @@ import (
 var (
 	cfgFile string
 	// These variables are set at build time using ldflags
-	version = "v0.2.2" // <---VERSION---> Updating this version, will also create a new GitHub tag.
+	version = "v0.3.0" // <---VERSION---> Updating this version, will also create a new GitHub tag.
 	commit  = "none"
 	date    = "unknown"
 
