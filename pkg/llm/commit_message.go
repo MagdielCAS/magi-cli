@@ -17,19 +17,20 @@ import (
 )
 
 const (
-	commitSystemPrompt = "You are an expert software assistant that writes concise, conventional commit messages."
-	commitUserPrompt   = `Analyze the provided git diff and craft a single-line commit message.
+	commitSystemPrompt = "You are an expert assistant that writes conventional commit messages."
+	commitUserPrompt   = `Analyze the provided git diff and generate a single-line commit message.
 
 Rules:
 1. Message format must be <type>(<scope>): <gitmoji> <description>
 2. Allowed types: feat, fix, docs, style, refactor, perf, test, build, ci, chore, revert
-3. Select a short, meaningful scope (e.g., cli, api, docs)
-4. Pick an appropriate gitmoji (✨, 🐛, 📚, 🎨, ♻️, ⚡️, ✅, 🔧, 👷, 🔨, ⏪️). Use unicode emoji, not shortcodes.
-5. The description must summarize why the change exists instead of restating file names.
-6. Only answer with the commit line. No explanations or code blocks.
+3. Scope must be a short, meaningful noun (e.g., cli, api, docs)
+4. Description must be a short summary of the change in present tense (e.g., add, fix, update). Do not capitalize. Do not end with a period.
+5. Pick one appropriate gitmoji from this list: ✨, 🐛, 📚, 🎨, ♻️, ⚡️, ✅, 🔧, 👷, 🔨, ⏪️. Use the unicode emoji, not shortcodes.
+6. The entire message must be a single line.
+7. Your response must only contain the commit message. Do not include any other text, explanations, or code blocks.
 
 Git diff to analyze:
-{{.Diff}}`
+` + "```diff\n{{.Diff}}\n```"
 )
 
 var commitPromptTemplate = template.Must(template.New("commit_prompt").Parse(commitUserPrompt))
@@ -75,7 +76,7 @@ func GenerateCommitMessage(ctx context.Context, runtime *shared.RuntimeContext, 
 			{Role: "system", Content: commitSystemPrompt},
 			{Role: "user", Content: prompt},
 		},
-		Temperature: 0.2,
+		Temperature: 0.0,
 		MaxTokens:   maxTokens,
 	})
 	if err != nil {
