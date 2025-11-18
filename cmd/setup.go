@@ -27,13 +27,20 @@ Examples:
   # Run the interactive setup wizard
   magi setup
 
-  # Run setup non-interactively
-  magi setup --api-key YOUR_API_KEY --model gpt-4 --format text`,
+  # Run setup non-interactively with OpenAI
+  magi setup --api-provider openai --api-key YOUR_API_KEY --heavy-model gpt-4
+
+  # Run setup non-interactively with a custom provider
+  magi setup --api-provider custom --base-url http://localhost:8080 --api-key YOUR_API_KEY --heavy-model custom-model`,
 		Run: runSetup,
 	}
 
+	setupCmd.Flags().String("api-provider", "", "API provider (e.g., openai, custom)")
+	setupCmd.Flags().String("base-url", "", "Base URL for custom OpenAI compatible API")
 	setupCmd.Flags().String("api-key", "", "Your OpenAI API key")
-	setupCmd.Flags().String("model", "", "Default AI model (e.g., gpt-4, gpt-3.5-turbo)")
+	setupCmd.Flags().String("light-model", "", "Model for light tasks (e.g., gpt-3.5-turbo)")
+	setupCmd.Flags().String("heavy-model", "", "Model for heavy tasks (e.g., gpt-4)")
+	setupCmd.Flags().String("fallback-model", "", "Fallback model (e.g., gpt-3.5-turbo)")
 	setupCmd.Flags().String("format", "", "Default output format (e.g., text, json, yaml)")
 
 	rootCmd.AddCommand(setupCmd)
@@ -51,37 +58,83 @@ func validateOption(option string, validOptions []string) bool {
 func runSetup(cmd *cobra.Command, args []string) {
 	pterm.Info.Println("Starting magi setup...")
 
+	apiProvider, _ := cmd.Flags().GetString("api-provider")
+	baseURL, _ := cmd.Flags().GetString("base-url")
 	apiKey, _ := cmd.Flags().GetString("api-key")
-	model, _ := cmd.Flags().GetString("model")
+	lightModel, _ := cmd.Flags().GetString("light-model")
+	heavyModel, _ := cmd.Flags().GetString("heavy-model")
+	fallbackModel, _ := cmd.Flags().GetString("fallback-model")
 	format, _ := cmd.Flags().GetString("format")
 	var err error
+
+	// Select API provider
+	validProviders := []string{"openai", "custom"}
+	if apiProvider == "" {
+		apiProvider, err = pterm.DefaultInteractiveSelect.
+			WithOptions(validProviders).
+			WithDefaultText("Select your API provider").
+			Show()
+		if err != nil {
+			pterm.Error.Printf("Failed to select API provider: %v\n", err)
+			return
+		}
+	} else if !validateOption(apiProvider, validProviders) {
+		pterm.Error.Printf("Invalid API provider: %s. Valid providers are: %s\n", apiProvider, strings.Join(validProviders, ", "))
+		return
+	}
+
+	// Get Base URL for custom provider
+	if apiProvider == "custom" {
+		if baseURL == "" {
+			baseURL, err = pterm.DefaultInteractiveTextInput.
+				WithMultiLine(false).
+				Show("Enter the base URL for the custom API")
+			if err != nil {
+				pterm.Error.Printf("Failed to get base URL: %v\n", err)
+				return
+			}
+		}
+	}
 
 	// Get API Key
 	if apiKey == "" {
 		apiKey, err = pterm.DefaultInteractiveTextInput.
 			WithMultiLine(false).
 			WithMask("*").
-			Show("Enter your OpenAI API key")
+			Show("Enter your API key")
 		if err != nil {
 			pterm.Error.Printf("Failed to get API key: %v\n", err)
 			return
 		}
 	}
 
-	// Set default model
-	validModels := []string{"gpt-4", "gpt-3.5-turbo"}
-	if model == "" {
-		model, err = pterm.DefaultInteractiveSelect.
-			WithOptions(validModels).
-			WithDefaultText("Select default AI model").
-			Show()
+	// Set models
+	if lightModel == "" {
+		lightModel, err = pterm.DefaultInteractiveTextInput.
+			WithDefaultValue("gpt-3.5-turbo").
+			Show("Enter the model for light tasks")
 		if err != nil {
-			pterm.Error.Printf("Failed to select model: %v\n", err)
+			pterm.Error.Printf("Failed to get light model: %v\n", err)
 			return
 		}
-	} else if !validateOption(model, validModels) {
-		pterm.Error.Printf("Invalid model: %s. Valid models are: %s\n", model, strings.Join(validModels, ", "))
-		return
+	}
+	if heavyModel == "" {
+		heavyModel, err = pterm.DefaultInteractiveTextInput.
+			WithDefaultValue("gpt-4").
+			Show("Enter the model for heavy tasks")
+		if err != nil {
+			pterm.Error.Printf("Failed to get heavy model: %v\n", err)
+			return
+		}
+	}
+	if fallbackModel == "" {
+		fallbackModel, err = pterm.DefaultInteractiveTextInput.
+			WithDefaultValue("gpt-3.5-turbo").
+			Show("Enter the fallback model")
+		if err != nil {
+			pterm.Error.Printf("Failed to get fallback model: %v\n", err)
+			return
+		}
 	}
 
 	// Configure output format
@@ -101,8 +154,14 @@ func runSetup(cmd *cobra.Command, args []string) {
 	}
 
 	// Save configuration
+	viper.Set("api.provider", apiProvider)
+	if apiProvider == "custom" {
+		viper.Set("api.base_url", baseURL)
+	}
 	viper.Set("api.key", apiKey)
-	viper.Set("api.model", model)
+	viper.Set("api.light_model", lightModel)
+	viper.Set("api.heavy_model", heavyModel)
+	viper.Set("api.fallback_model", fallbackModel)
 	viper.Set("output.format", format)
 	viper.Set("output.color", true)
 	viper.Set("cache.enabled", true)

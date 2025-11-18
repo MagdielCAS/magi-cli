@@ -53,12 +53,14 @@ func TestServiceChatCompletion(t *testing.T) {
 			if got := req.Header.Get("Authorization"); got != "Bearer heavy-key" {
 				t.Fatalf("unexpected authorization header %s", got)
 			}
-			body := io.NopCloser(strings.NewReader(`{"choices":[{"message":{"role":"assistant","content":"ok"}}]}`))
-			return &http.Response{
+			body := io.NopCloser(strings.NewReader(successfulChatCompletionResponse))
+			resp := &http.Response{
 				StatusCode: http.StatusOK,
 				Body:       body,
 				Header:     make(http.Header),
-			}, nil
+			}
+			resp.Header.Set("Content-Type", "application/json")
+			return resp, nil
 		}),
 	}
 	rt := &shared.RuntimeContext{
@@ -90,6 +92,52 @@ func TestServiceChatCompletion(t *testing.T) {
 		t.Fatalf("unexpected request path %s", path)
 	}
 }
+
+const successfulChatCompletionResponse = `{
+  "id": "chatcmpl-test",
+  "object": "chat.completion",
+  "created": 1234567890,
+  "model": "gpt-4",
+  "service_tier": "default",
+  "system_fingerprint": "fp",
+  "choices": [
+    {
+      "index": 0,
+      "finish_reason": "stop",
+      "logprobs": {
+        "content": [],
+        "refusal": []
+      },
+      "message": {
+        "role": "assistant",
+        "content": "ok",
+        "refusal": "",
+        "annotations": [],
+        "tool_calls": [],
+        "audio": null,
+        "function_call": {
+          "arguments": "",
+          "name": ""
+        }
+      }
+    }
+  ],
+  "usage": {
+    "prompt_tokens": 1,
+    "completion_tokens": 1,
+    "total_tokens": 2,
+    "completion_tokens_details": {
+      "accepted_prediction_tokens": 0,
+      "audio_tokens": 0,
+      "reasoning_tokens": 0,
+      "rejected_prediction_tokens": 0
+    },
+    "prompt_tokens_details": {
+      "audio_tokens": 0,
+      "cached_tokens": 0
+    }
+  }
+}`
 
 type roundTripFunc func(*http.Request) (*http.Response, error)
 

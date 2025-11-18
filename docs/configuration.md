@@ -10,72 +10,64 @@ The default configuration file is located at `$HOME/.magi-cli/config.yaml`. You 
 
 ```yaml
 api:
+  provider: "openai"
   key: "your-api-key"
-  endpoint: "https://api.openai.com/v1"
-  model: "gpt-4"
-
-defaults:
-  temperature: 0.7
-  max_tokens: 1000
-  context_lines: 5
+  base_url: "https://api.openai.com/v1"
+  light_model: "gpt-3.5-turbo"
+  heavy_model: "gpt-4"
+  fallback_model: "gpt-3.5-turbo"
+  light:
+    api_key: ""        # Optional override for light calls
+    base_url: ""       # Optional override for light calls
+  heavy:
+    api_key: ""        # Optional override for heavy calls
+    base_url: ""       # Optional override for heavy calls
+  fallback:
+    api_key: ""        # Optional override for fallback calls
+    base_url: ""       # Optional override for fallback calls
 
 output:
   format: "text"
   color: true
-  verbose: false
 
 cache:
   enabled: true
   ttl: 3600
-  max_size: "100MB"
 ```
 
 ## Configuration Options
 
 ### API Settings
 
-- `api.key`: Your OpenAI API key or compatible API key
-- `api.endpoint`: API endpoint URL
-- `api.model`: Default model to use
-
-### Default Parameters
-
-- `defaults.temperature`: AI response creativity (0.0-1.0)
-- `defaults.max_tokens`: Maximum tokens per request
-- `defaults.context_lines`: Default context lines for code analysis
+- `api.provider`: AI provider slug (defaults to `openai`)
+- `api.key`: Default API key used for all calls unless overridden
+- `api.base_url`: Default base URL for the provider
+- `api.light_model`: Model used for "light" requests
+- `api.heavy_model`: Model used for "heavy" requests
+- `api.fallback_model`: Optional fallback model
+- `api.light.api_key`, `api.heavy.api_key`, `api.fallback.api_key`: Optional API key overrides
+- `api.light.base_url`, `api.heavy.base_url`, `api.fallback.base_url`: Optional endpoint overrides
 
 ### Output Settings
 
 - `output.format`: Default output format (text|json|yaml)
 - `output.color`: Enable/disable colored output
-- `output.verbose`: Enable/disable verbose logging
 
 ### Cache Settings
 
 - `cache.enabled`: Enable/disable response caching
 - `cache.ttl`: Cache time-to-live in seconds
-- `cache.max_size`: Maximum cache size
 
 ## Managing Configuration
 
 ### Command Line
 
 ```bash
-# Set a configuration value
-magi-cli config set api.key your-api-key
+# Set a global API key and base URL
+magi config set api.key sk-xxx
+magi config set api.base_url https://api.openai.com/v1
 
-# Get current configuration
-magi-cli config get
-
-# Reset to defaults
-magi-cli config reset
-```
-
-### Environment Variables
-
-You can override configuration using environment variables:
-
-```bash
-export MAGI_API_KEY=your-api-key
-export MAGI_OUTPUT_FORMAT=json
+# Override only the heavy model endpoint
+magi config set api.heavy.api_key sk-heavy-only
+magi config set api.heavy.base_url https://enterprise-gateway.example.com/v1
 ```
