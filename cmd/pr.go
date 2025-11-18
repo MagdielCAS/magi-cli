@@ -3,7 +3,6 @@ package cmd
 import (
 	"context"
 	"encoding/json"
-	"errors"
 	"fmt"
 	"os"
 	"os/exec"
@@ -61,7 +60,7 @@ func runPR(cmd *cobra.Command, _ []string) error {
 		return err
 	}
 
-	diff, remoteRef, err := diffBranchAgainstRemote(ctx, branch)
+	diff, baseRef, baseBranch, err := diffAgainstBaseBranch(ctx, branch)
 	if err != nil {
 		return err
 	}
@@ -86,7 +85,7 @@ func runPR(cmd *cobra.Command, _ []string) error {
 	artifacts, err := reviewer.Review(ctx, pr.ReviewInput{
 		Diff:              diff,
 		Branch:            branch,
-		RemoteRef:         remoteRef,
+		RemoteRef:         baseRef,
 		Guidelines:        guidelines,
 		AdditionalContext: additionalContext,
 		Template:          templateBody,
@@ -112,7 +111,7 @@ func runPR(cmd *cobra.Command, _ []string) error {
 		return fmt.Errorf("failed to push branch prior to PR creation: %w", err)
 	}
 
-	prURL, err := createPullRequest(ctx, branch, artifacts.Plan)
+	prURL, err := createPullRequest(ctx, branch, baseBranch, artifacts.Plan)
 	if err != nil {
 		return err
 	}
@@ -176,23 +175,51 @@ func printList(title string, entries []string) {
 	}
 }
 
-func diffBranchAgainstRemote(ctx context.Context, branch string) (string, string, error) {
-	remote := branchRemote(ctx, branch)
-	remoteRef := fmt.Sprintf("%s/%s", remote, branch)
-	if _, err := runGit(ctx, "rev-parse", "--verify", remoteRef); err != nil {
-		return "", "", fmt.Errorf("unable to find %s. Fetch the branch first: %w", remoteRef, err)
+func diffAgainstBaseBranch(ctx context.Context, branch string) (string, string, string, error) {
+	baseRef, baseBranch, err := resolveBaseBranch(ctx, branch)
+	if err != nil {
+		return "", "", "", err
 	}
 
-	diff, err := runGit(ctx, "diff", fmt.Sprintf("%s...HEAD", remoteRef))
+	diff, err := runGit(ctx, "diff", fmt.Sprintf("%s..HEAD", baseRef))
 	if err != nil {
-		return "", "", err
+		return "", "", "", err
 	}
 
 	if strings.TrimSpace(diff) == "" {
-		return "", "", errors.New("no differences detected between HEAD and " + remoteRef)
+		return "", "", "", fmt.Errorf("no differences detected between HEAD and %s", baseRef)
 	}
 
-	return diff, remoteRef, nil
+	return diff, baseRef, baseBranch, nil
+}
+
+func resolveBaseBranch(ctx context.Context, branch string) (string, string, error) {
+	remote := branchRemote(ctx, branch)
+
+	mergeRef, err := runGit(ctx, "config", fmt.Sprintf("branch.%s.merge", branch))
+	baseBranch := ""
+	if err == nil {
+		baseBranch = strings.TrimPrefix(strings.TrimSpace(mergeRef), "refs/heads/")
+	}
+
+	if baseBranch == "" {
+		headRef, headErr := runGit(ctx, "symbolic-ref", fmt.Sprintf("refs/remotes/%s/HEAD", remote))
+		if headErr == nil {
+			prefix := fmt.Sprintf("refs/remotes/%s/", remote)
+			baseBranch = strings.TrimPrefix(strings.TrimSpace(headRef), prefix)
+		}
+	}
+
+	if baseBranch == "" {
+		baseBranch = "main"
+	}
+
+	baseRef := fmt.Sprintf("%s/%s", remote, baseBranch)
+	if _, err := runGit(ctx, "rev-parse", "--verify", baseRef); err != nil {
+		return "", "", fmt.Errorf("unable to resolve %s: %w", baseRef, err)
+	}
+
+	return baseRef, baseBranch, nil
 }
 
 func repoRootPath(ctx context.Context) (string, error) {
@@ -203,7 +230,7 @@ func repoRootPath(ctx context.Context) (string, error) {
 	return strings.TrimSpace(output), nil
 }
 
-func createPullRequest(ctx context.Context, branch string, plan pr.PullRequestPlan) (string, error) {
+func createPullRequest(ctx context.Context, branch, base string, plan pr.PullRequestPlan) (string, error) {
 	bodyFile, err := writeTempFile("magi-pr-body-*.md", plan.Body)
 	if err != nil {
 		return "", err
@@ -215,6 +242,9 @@ func createPullRequest(ctx context.Context, branch string, plan pr.PullRequestPl
 		"--title", strings.TrimSpace(plan.Title),
 		"--body-file", bodyFile,
 		"--head", branch,
+	}
+	if base != "" {
+		args = append(args, "--base", base)
 	}
 	if _, err := runGH(ctx, args...); err != nil {
 		return "", err
