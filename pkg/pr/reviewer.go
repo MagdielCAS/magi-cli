@@ -172,7 +172,7 @@ func (r *AgenticReviewer) buildAgent(name, prompt string, prefs agentPreferences
 		withTimeout(prefs.timeout),
 	}
 
-	return vnext.NewChatAgent(name, opts...)
+	return vnext.NewDataAgent(name, opts...)
 }
 
 func (r *AgenticReviewer) selectModel(preferLight bool) (modelSelection, error) {
