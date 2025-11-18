@@ -215,11 +215,12 @@ func resolveBaseBranch(ctx context.Context, branch string) (string, string, erro
 		baseBranch = "main"
 	}
 
-	remoteBranch := fmt.Sprintf("%s/%s", remote, baseBranch)
-	baseRef, err := runGit(ctx, "rev-parse", "--verify", remoteBranch)
+	baseRef, err := runGit(ctx, "rev-parse", "--verify", baseBranch)
 	if err != nil {
-		return "", "", fmt.Errorf("unable to resolve %s: %w", remoteBranch, err)
+		return "", "", fmt.Errorf("unable to resolve %s: %w", baseBranch, err)
 	}
+
+	baseRef = strings.Trim(baseRef, "\n")
 
 	return baseRef, baseBranch, nil
 }
