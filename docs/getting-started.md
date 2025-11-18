@@ -56,10 +56,12 @@ magi-cli analyze ./path/to/file
 
 # Get code suggestions
 magi-cli suggest ./path/to/file
+
+# Craft an AI-generated commit message
+magi-cli commit
 ```
 
 ## Next Steps
 
 - Read the [Commands Reference](./commands.md) for detailed information about available commands
 - Learn about [Configuration](./configuration.md) options
-
