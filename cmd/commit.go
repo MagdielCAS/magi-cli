@@ -93,8 +93,14 @@ func runCommit(cmd *cobra.Command, _ []string) error {
 	}
 
 	message = utils.RemoveCodeBlock(message)
+	message = normalizeCommitMessage(message)
 	if err := validateCommitFormat(message); err != nil {
-		return fmt.Errorf("invalid commit message from provider: %w", err)
+		pterm.Warning.Printf("Generated commit message failed validation: %v. Retrying with guidance...\n", err)
+		message, err = retryCommitMessage(cmd.Context(), runtimeCtx, diff, message, err)
+		if err != nil {
+			pterm.Error.PrintOnError(err)
+			message = utils.RemoveCodeBlock(message)
+		}
 	}
 
 	pterm.DefaultBox.WithTitle("Suggested Commit Message").Println(message)
@@ -449,6 +455,14 @@ func validateCommitFormat(message string) error {
 		return errors.New("missing commit description")
 	}
 
+	fields := strings.Fields(payload)
+	if len(fields) < 2 {
+		return errors.New("commit description must include an emoji and summary text")
+	}
+	if !isAllowedGitmoji(fields[0]) {
+		return fmt.Errorf("unsupported gitmoji %q", fields[0])
+	}
+
 	return nil
 }
 
@@ -459,4 +473,38 @@ func isAllowedCommitType(commitType string) bool {
 	default:
 		return false
 	}
+}
+
+var allowedGitmoji = map[string]struct{}{
+	"✨":  {},
+	"🐛":  {},
+	"📚":  {},
+	"🎨":  {},
+	"♻️": {},
+	"⚡️": {},
+	"✅":  {},
+	"🔧":  {},
+	"👷":  {},
+	"🔨":  {},
+	"⏪️": {},
+}
+
+func isAllowedGitmoji(emoji string) bool {
+	_, ok := allowedGitmoji[emoji]
+	return ok
+}
+
+func retryCommitMessage(ctx context.Context, runtimeCtx *shared.RuntimeContext, diff, previous string, validationErr error) (string, error) {
+	fixed, err := llm.FixCommitMessage(ctx, runtimeCtx, diff, previous, validationErr)
+	if err != nil {
+		return "", fmt.Errorf("unable to refine commit message after validation failure: %w", err)
+	}
+
+	fixed = utils.RemoveCodeBlock(fixed)
+	fixed = normalizeCommitMessage(fixed)
+	if err := validateCommitFormat(fixed); err != nil {
+		return "", fmt.Errorf("ai failed to produce a valid commit message after refinement: %w", err)
+	}
+
+	return fixed, nil
 }
