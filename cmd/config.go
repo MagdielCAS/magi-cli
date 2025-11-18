@@ -28,7 +28,13 @@ Examples:
   magi config get api.key
 
   # Set a configuration value
-  magi config set api.model gpt-4
+  magi config set api.heavy_model gpt-4
+
+  # Set the API provider
+  magi config set api.provider custom
+
+  # Set the base URL for the custom provider
+  magi config set api.base_url http://localhost:8080
 
   # List all configuration values
   magi config list

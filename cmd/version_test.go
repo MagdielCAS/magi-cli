@@ -31,7 +31,7 @@ func TestVersionCmd(t *testing.T) {
 	}
 
 	output := buf.String()
-	if !strings.Contains(output, "magi CLI Version: dev") {
-		t.Errorf("expected output to contain 'magi CLI Version: dev', but got '%s'", output)
+	if !strings.Contains(output, "magi CLI Version:") {
+		t.Errorf("expected output to contain version header, but got '%s'", output)
 	}
 }

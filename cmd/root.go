@@ -19,7 +19,7 @@ import (
 var (
 	cfgFile string
 	// These variables are set at build time using ldflags
-	version = "dev"
+	version = "v0.2.2" // <---VERSION---> Updating this version, will also create a new GitHub tag.
 	commit  = "none"
 	date    = "unknown"
 
@@ -43,11 +43,11 @@ Examples:
   magi setup
 
   # Configure your API key
-  magi config set api-key your-api-key
+  magi config set api.key your-api-key
 
 Run 'magi [command] --help' for more information on a specific command.`,
-		Example: `  magi config set api-key your-api-key`,
-		Version: "v0.2.2", // <---VERSION---> Updating this version, will also create a new GitHub tag.
+		Example: `  magi config set api.key your-api-key`,
+		Version: version,
 	}
 )
 
@@ -177,6 +177,11 @@ func init() {
 
 	viper.BindPFlag("author", rootCmd.PersistentFlags().Lookup("author"))
 	viper.SetDefault("license", "bsd-2")
+	viper.SetDefault("api.provider", "openai")
+	viper.SetDefault("api.base_url", "")
+	viper.SetDefault("api.light_model", "gpt-3.5-turbo")
+	viper.SetDefault("api.heavy_model", "gpt-4")
+	viper.SetDefault("api.fallback_model", "gpt-3.5-turbo")
 
 	// Use https://github.com/pterm/pcli to style the output of cobra.
 	pcli.SetRepo("MagdielCAS/magi-cli")

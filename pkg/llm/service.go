@@ -5,12 +5,14 @@
 package llm
 
 import (
-	"bytes"
 	"context"
-	"encoding/json"
 	"fmt"
 	"net/http"
 	"strings"
+
+	openai "github.com/openai/openai-go"
+	"github.com/openai/openai-go/option"
+	openaiShared "github.com/openai/openai-go/shared"
 
 	"github.com/MagdielCAS/magi-cli/pkg/shared"
 )
@@ -108,20 +110,27 @@ func (b *ServiceBuilder) Build() (*Service, error) {
 		return nil, fmt.Errorf("base URL is not configured")
 	}
 
-	client := b.httpClient
-	if client == nil {
-		client = b.runtime.HTTPClient
+	httpClient := b.httpClient
+	if httpClient == nil {
+		httpClient = b.runtime.HTTPClient
 	}
-	if client == nil {
-		client = shared.DefaultHTTPClient()
+	if httpClient == nil {
+		httpClient = shared.DefaultHTTPClient()
 	}
 
+	trimmedBaseURL := strings.TrimRight(baseURL, "/")
+	client := openai.NewClient(
+		option.WithAPIKey(apiKey),
+		option.WithBaseURL(trimmedBaseURL),
+		option.WithHTTPClient(httpClient),
+	)
+
 	return &Service{
-		provider:   b.runtime.Provider,
-		model:      model,
-		apiKey:     apiKey,
-		baseURL:    strings.TrimRight(baseURL, "/"),
-		httpClient: client,
+		provider: b.runtime.Provider,
+		model:    model,
+		apiKey:   apiKey,
+		baseURL:  trimmedBaseURL,
+		client:   client,
 	}, nil
 }
 
@@ -138,11 +147,11 @@ func (b *ServiceBuilder) resolveVariantConfig() (string, shared.ModelEndpoint) {
 
 // Service executes LLM requests using the resolved configuration.
 type Service struct {
-	provider   string
-	model      string
-	apiKey     string
-	baseURL    string
-	httpClient *http.Client
+	provider string
+	model    string
+	apiKey   string
+	baseURL  string
+	client   openai.Client
 }
 
 // ChatMessage represents a message in a chat completion request.
@@ -153,8 +162,12 @@ type ChatMessage struct {
 
 // ChatCompletionRequest represents a chat completion call.
 type ChatCompletionRequest struct {
-	Messages    []ChatMessage
-	Temperature float32
+	Messages         []ChatMessage
+	Temperature      float64
+	MaxTokens        float64
+	TopP             float64
+	FrequencyPenalty float64
+	PresencePenalty  float64
 }
 
 // ChatCompletion sends a chat completion request and returns the assistant response text.
@@ -163,69 +176,68 @@ func (s *Service) ChatCompletion(ctx context.Context, req ChatCompletionRequest)
 		return "", fmt.Errorf("at least one message is required")
 	}
 
-	payload := openAIChatRequest{
-		Model:       s.model,
-		Messages:    req.Messages,
-		Temperature: req.Temperature,
-	}
-
-	body, err := json.Marshal(payload)
+	messages, err := buildMessageParams(req.Messages)
 	if err != nil {
-		return "", fmt.Errorf("failed to encode completion request: %w", err)
+		return "", err
 	}
 
-	url := s.baseURL + "/chat/completions"
-	httpReq, err := http.NewRequestWithContext(ctx, http.MethodPost, url, bytes.NewReader(body))
-	if err != nil {
-		return "", fmt.Errorf("failed to create completion request: %w", err)
+	temperature := req.Temperature
+	if req.Temperature == 0 {
+		temperature = 0.2
 	}
 
-	httpReq.Header.Set("Authorization", "Bearer "+s.apiKey)
-	httpReq.Header.Set("Content-Type", "application/json")
+	params := openai.ChatCompletionNewParams{
+		Model:    openaiShared.ChatModel(s.model),
+		Messages: messages,
+	}
 
-	resp, err := s.httpClient.Do(httpReq)
+	if req.MaxTokens > 0 {
+		params.MaxCompletionTokens = openai.Int(int64(req.MaxTokens))
+		params.MaxTokens = openai.Int(int64(req.MaxTokens))
+	}
+	params.Temperature = openai.Float(temperature)
+	if req.TopP != 0 {
+		params.TopP = openai.Float(req.TopP)
+	}
+	if req.FrequencyPenalty != 0 {
+		params.FrequencyPenalty = openai.Float(req.FrequencyPenalty)
+	}
+	if req.PresencePenalty != 0 {
+		params.PresencePenalty = openai.Float(req.PresencePenalty)
+	}
+
+	resp, err := s.client.Chat.Completions.New(ctx, params)
 	if err != nil {
 		return "", fmt.Errorf("chat completion request failed: %w", err)
 	}
-	defer resp.Body.Close()
 
-	var parsed openAIChatResponse
-	if err := json.NewDecoder(resp.Body).Decode(&parsed); err != nil {
-		return "", fmt.Errorf("failed to decode response: %w", err)
-	}
-
-	if resp.StatusCode != http.StatusOK {
-		if parsed.Error.Message != "" {
-			return "", fmt.Errorf("provider error: %s", parsed.Error.Message)
-		}
-		return "", fmt.Errorf("provider returned %s", resp.Status)
-	}
-
-	if len(parsed.Choices) == 0 || parsed.Choices[0].Message.Content == "" {
+	if len(resp.Choices) == 0 || resp.Choices[0].Message.Content == "" {
 		return "", fmt.Errorf("provider response did not contain a message")
 	}
 
-	return parsed.Choices[0].Message.Content, nil
+	return resp.Choices[0].Message.Content, nil
 }
 
-type chatMessage struct {
-	Role    string `json:"role"`
-	Content string `json:"content"`
-}
-
-type openAIChatRequest struct {
-	Model       string        `json:"model"`
-	Messages    []ChatMessage `json:"messages"`
-	Temperature float32       `json:"temperature"`
-}
-
-type openAIChatResponse struct {
-	Choices []struct {
-		Message chatMessage `json:"message"`
-	} `json:"choices"`
-	Error struct {
-		Message string `json:"message"`
-	} `json:"error"`
+func buildMessageParams(messages []ChatMessage) ([]openai.ChatCompletionMessageParamUnion, error) {
+	results := make([]openai.ChatCompletionMessageParamUnion, 0, len(messages))
+	for _, msg := range messages {
+		role := strings.ToLower(strings.TrimSpace(msg.Role))
+		var param openai.ChatCompletionMessageParamUnion
+		switch role {
+		case "system":
+			param = openai.SystemMessage(msg.Content)
+		case "user":
+			param = openai.UserMessage(msg.Content)
+		case "assistant":
+			param = openai.AssistantMessage(msg.Content)
+		case "developer":
+			param = openai.DeveloperMessage(msg.Content)
+		default:
+			return nil, fmt.Errorf("unsupported message role %q", msg.Role)
+		}
+		results = append(results, param)
+	}
+	return results, nil
 }
 
 func providerDefaultBaseURL(provider string) string {
