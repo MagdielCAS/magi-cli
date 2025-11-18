@@ -96,6 +96,20 @@ Security callout:
 - Relies entirely on your local git installation; no new data is sent to remote services beyond what git already transmits for a push.
 - Warns when a pre-push hook exists and prints the hook output if the hook blocks the push.
 
+### pr
+
+Run an AgenticGoKit review of the local commits that differ from `origin/<branch>`, fill `.github/pull_request_template.md`, and open a GitHub pull request with the `gh` CLI. The command asks for extra context before invoking the agents, prints the generated review and template, and only creates the PR after you confirm.
+
+```bash
+# Review local commits, fill the template, and open a PR
+magi pr
+```
+
+Security callout:
+- Sends only the diff between `HEAD` and `origin/<branch>`, AGENTS.md contents, and any optional user-provided notes to the configured AI provider.
+- Uses the hardened HTTP client and never logs raw model responses that might contain secrets.
+- Shells out to `git` and `gh` with explicit arguments; no other tools are executed.
+
 ## Additional Commands
 
 [More commands will be added as they are implemented]

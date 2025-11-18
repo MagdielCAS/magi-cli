@@ -58,6 +58,16 @@ cache:
 - `cache.enabled`: Enable/disable response caching
 - `cache.ttl`: Cache time-to-live in seconds
 
+## Pull Request Command Settings
+
+The `magi pr` command reuses the API configuration above and additionally expects:
+
+- `.github/pull_request_template.md` to exist so the agent can fill it.
+- At least one `AGENTS.md` file if you want repository-specific guardrails enforced during the review.
+- The GitHub CLI (`gh`) must be installed and authenticated because it creates the pull request and posts the review comment on your behalf.
+
+No additional configuration keys are required; `magi pr` automatically uses the heavy model for deep review and the light model (when configured) for writing the template. If only one model tier is configured, it is reused for every step.
+
 ## Managing Configuration
 
 ### Command Line
