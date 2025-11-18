@@ -186,6 +186,7 @@ func diffAgainstBaseBranch(ctx context.Context, branch string) (string, string, 
 		return "", "", "", err
 	}
 
+	fmt.Printf("%s: %s\n", baseRef, strings.TrimSpace(diff))
 	if strings.TrimSpace(diff) == "" {
 		return "", "", "", fmt.Errorf("no differences detected between HEAD and %s", baseRef)
 	}
@@ -214,9 +215,10 @@ func resolveBaseBranch(ctx context.Context, branch string) (string, string, erro
 		baseBranch = "main"
 	}
 
-	baseRef := fmt.Sprintf("%s/%s", remote, baseBranch)
-	if _, err := runGit(ctx, "rev-parse", "--verify", baseRef); err != nil {
-		return "", "", fmt.Errorf("unable to resolve %s: %w", baseRef, err)
+	remoteBranch := fmt.Sprintf("%s/%s", remote, baseBranch)
+	baseRef, err := runGit(ctx, "rev-parse", "--verify", remoteBranch)
+	if err != nil {
+		return "", "", fmt.Errorf("unable to resolve %s: %w", remoteBranch, err)
 	}
 
 	return baseRef, baseBranch, nil
