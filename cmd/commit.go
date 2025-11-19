@@ -94,12 +94,14 @@ func runCommit(cmd *cobra.Command, _ []string) error {
 
 	message = utils.RemoveCodeBlock(message)
 	message = normalizeCommitMessage(message)
-	if err := validateCommitFormat(message); err != nil {
-		pterm.Warning.Printf("Generated commit message failed validation: %v. Retrying with guidance...\n", err)
-		message, err = retryCommitMessage(cmd.Context(), runtimeCtx, diff, message, err)
-		if err != nil {
+	if validationErr := validateCommitFormat(message); validationErr != nil {
+		pterm.Warning.Printf("Generated commit message failed validation: %v. Retrying with guidance...\n", validationErr)
+		originalMessage := message
+		if fixedMessage, err := retryCommitMessage(cmd.Context(), runtimeCtx, diff, message, validationErr); err == nil {
+			message = fixedMessage
+		} else {
 			pterm.Error.PrintOnError(err)
-			message = utils.RemoveCodeBlock(message)
+			message = originalMessage
 		}
 	}
 
@@ -279,18 +281,43 @@ func currentBranchName(ctx context.Context) (string, error) {
 	return branch, nil
 }
 
-func branchRemote(ctx context.Context, branch string) string {
-	output, err := runGit(ctx, "config", fmt.Sprintf("branch.%s.remote", branch))
-	if err != nil {
-		return "origin"
+func branchRemote(ctx context.Context, branch string) (string, error) {
+	if branch == "" {
+		return "", errors.New("branch name is required to determine its remote")
 	}
 
-	remote := strings.TrimSpace(output)
+	remote := ""
+	if output, err := runGit(ctx, "config", fmt.Sprintf("branch.%s.remote", branch)); err == nil {
+		remote = strings.TrimSpace(output)
+	}
+
 	if remote == "" {
-		return "origin"
+		if upstream, err := runGit(ctx, "rev-parse", "--abbrev-ref", fmt.Sprintf("%s@{u}", branch)); err == nil {
+			if parts := strings.SplitN(strings.TrimSpace(upstream), "/", 2); len(parts) == 2 {
+				remote = parts[0]
+			}
+		}
 	}
 
-	return remote
+	if remote == "" {
+		remote = "origin"
+	}
+
+	if err := verifyRemoteExists(ctx, remote); err != nil {
+		return "", fmt.Errorf("unable to find remote %s for branch %s: %w", remote, branch, err)
+	}
+
+	return remote, nil
+}
+
+func verifyRemoteExists(ctx context.Context, remote string) error {
+	if strings.TrimSpace(remote) == "" {
+		return errors.New("remote name cannot be empty")
+	}
+	if _, err := runGit(ctx, "remote", "get-url", remote); err != nil {
+		return err
+	}
+	return nil
 }
 
 func gitHooksDir(ctx context.Context) (string, error) {
@@ -299,7 +326,12 @@ func gitHooksDir(ctx context.Context) (string, error) {
 		return "", err
 	}
 
-	return strings.TrimSpace(output), nil
+	path := strings.TrimSpace(output)
+	if path == "" {
+		return "", fmt.Errorf("git did not return a hooks directory")
+	}
+
+	return filepath.Clean(path), nil
 }
 
 func hasGitHook(ctx context.Context, hookName string) (bool, string, error) {
@@ -345,9 +377,10 @@ func gitCommit(ctx context.Context, message string) error {
 		return err
 	}
 
-	if trimmed := strings.TrimSpace(result.Stdout); trimmed != "" {
-		pterm.Info.Println(trimmed)
+	if strings.TrimSpace(result.Stdout) != "" {
+		pterm.Info.Println("git commit completed with additional output omitted to protect sensitive data.")
 	}
+	pterm.Success.Println("Commit recorded.")
 
 	return nil
 }

@@ -42,7 +42,11 @@ func runPush(cmd *cobra.Command, _ []string) error {
 
 	hasUpstream := branchHasUpstream(ctx)
 	hookDetected := warnOnHook(ctx, "pre-push")
-	remote := branchRemote(ctx, branch)
+	remote, err := branchRemote(ctx, branch)
+	if err != nil {
+		return err
+	}
+
 	args := buildPushArgs(branch, remote, hasUpstream)
 
 	if !hasUpstream {

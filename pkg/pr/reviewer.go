@@ -12,6 +12,7 @@ import (
 	_ "github.com/kunalkushwaha/agenticgokit/plugins/llm/openai"
 
 	"github.com/MagdielCAS/magi-cli/pkg/shared"
+	"github.com/MagdielCAS/magi-cli/pkg/utils"
 )
 
 const (
@@ -122,13 +123,14 @@ func (r *AgenticReviewer) Review(ctx context.Context, input ReviewInput) (*Revie
 
 	var artifacts ReviewArtifacts
 	for _, step := range result.StepResults {
+		output := sanitizeLLMJSON(step.Output)
 		switch step.StepName {
 		case analysisStepName:
-			if err := json.Unmarshal([]byte(step.Output), &artifacts.Analysis); err != nil {
+			if err := json.Unmarshal([]byte(output), &artifacts.Analysis); err != nil {
 				return nil, fmt.Errorf("analysis agent produced invalid JSON: %w (raw: %s)", err, sanitizeForError(step.Output))
 			}
 		case writerStepName:
-			if err := json.Unmarshal([]byte(step.Output), &artifacts.Plan); err != nil {
+			if err := json.Unmarshal([]byte(output), &artifacts.Plan); err != nil {
 				return nil, fmt.Errorf("PR writer agent produced invalid JSON: %w (raw: %s)", err, sanitizeForError(step.Output))
 			}
 		}
@@ -230,16 +232,18 @@ func (r *AgenticReviewer) selectModel(preferLight bool) (modelSelection, error) 
 }
 
 func withAPIKey(key string) vnext.Option {
+	safeKey := strings.TrimSpace(key)
 	return func(cfg *vnext.Config) {
-		cfg.LLM.APIKey = strings.TrimSpace(key)
+		cfg.LLM.APIKey = safeKey
 	}
 }
 
 func withBaseURL(baseURL string) vnext.Option {
+	cleaned := strings.TrimSpace(baseURL)
 	return func(cfg *vnext.Config) {
-		cfg.LLM.BaseURL = strings.TrimSpace(baseURL)
-		cfg.LLM.SiteURL = "https://magdielcas.github.io/magi-cli/"
-		cfg.LLM.SiteName = "magi-cli"
+		if cleaned != "" {
+			cfg.LLM.BaseURL = cleaned
+		}
 	}
 }
 
@@ -253,8 +257,21 @@ func withTimeout(duration time.Duration) vnext.Option {
 
 func sanitizeForError(output string) string {
 	trimmed := strings.TrimSpace(output)
-	if len(trimmed) > 512 {
-		return trimmed[:512] + "..."
+	if trimmed == "" {
+		return ""
+	}
+
+	const maxSnippetLen = 2048
+	if len(trimmed) > maxSnippetLen {
+		return trimmed[:maxSnippetLen] + "... (truncated)"
 	}
 	return trimmed
+}
+
+func sanitizeLLMJSON(raw string) string {
+	if raw == "" {
+		return ""
+	}
+	content := utils.RemoveCodeBlock(raw)
+	return strings.ReplaceAll(content, "`", "")
 }

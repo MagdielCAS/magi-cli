@@ -60,6 +60,11 @@ magi-cli is a command-line interface tool designed to enhance programmer product
 - Code review suggestions
 - And more...
 
+## Shared Packages
+
+- `pkg/llm` — Centralized AI client construction that keeps provider credentials, base URLs, and hardened HTTP clients consistent across commands such as `magi commit` and `magi pr`.
+- `pkg/pr` — Pull-request review utilities used by `magi pr`, including AGENTS guideline discovery, prompt builders, and the AgenticReviewer orchestration layer.
+
 ## Installation
 
 Run the following command in a terminal and you're ready to go!
