@@ -1,5 +1,5 @@
 <h1 align="center">magi-cli</h1>
-<p align="center">This cli template shows the date and time in the terminal</p>
+<p align="center">A powerful AI-assisted CLI for developers that enhances productivity</p>
 
 <p align="center">
 
