@@ -19,12 +19,15 @@ api:
   light:
     api_key: ""        # Optional override for light calls
     base_url: ""       # Optional override for light calls
+    provider: ""       # Optional provider override (e.g., openrouter)
   heavy:
     api_key: ""        # Optional override for heavy calls
     base_url: ""       # Optional override for heavy calls
+    provider: ""       # Optional provider override
   fallback:
     api_key: ""        # Optional override for fallback calls
     base_url: ""       # Optional override for fallback calls
+    provider: ""       # Optional provider override
 
 output:
   format: "text"
@@ -37,16 +40,17 @@ cache:
 
 ## Configuration Options
 
-### API Settings
+### API Settings _(Since v0.3.0)_
 
-- `api.provider`: AI provider slug (defaults to `openai`)
-- `api.key`: Default API key used for all calls unless overridden
-- `api.base_url`: Default base URL for the provider
-- `api.light_model`: Model used for "light" requests
-- `api.heavy_model`: Model used for "heavy" requests
-- `api.fallback_model`: Optional fallback model
-- `api.light.api_key`, `api.heavy.api_key`, `api.fallback.api_key`: Optional API key overrides
-- `api.light.base_url`, `api.heavy.base_url`, `api.fallback.base_url`: Optional endpoint overrides
+- `api.provider`: Primary AI provider slug (defaults to `openai`).
+- `api.key`: Default API key used for all calls unless overridden.
+- `api.base_url`: Default base URL for the provider.
+- `api.light_model`: Model used for "light" requests such as PR template writing.
+- `api.heavy_model`: Model used for "heavy" analysis (diff reviews, commit generation).
+- `api.fallback_model`: Optional fallback when a primary tier is missing.
+- `api.light.api_key`, `api.heavy.api_key`, `api.fallback.api_key`: Optional API key overrides per tier so you can scope credentials to least-privilege roles.
+- `api.light.base_url`, `api.heavy.base_url`, `api.fallback.base_url`: Optional endpoint overrides (e.g., Azure OpenAI, OpenRouter) per tier.
+- `api.light.provider`, `api.heavy.provider`, `api.fallback.provider`: Optional provider overrides per tier when different vendor slugs are required.
 
 ### Output Settings
 
@@ -58,7 +62,7 @@ cache:
 - `cache.enabled`: Enable/disable response caching
 - `cache.ttl`: Cache time-to-live in seconds
 
-## Pull Request Command Settings
+## Pull Request Command Settings _(Since v0.3.0)_
 
 The `magi pr` command reuses the API configuration above and additionally expects:
 

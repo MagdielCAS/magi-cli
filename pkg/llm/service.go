@@ -231,7 +231,9 @@ func buildMessageParams(messages []ChatMessage) ([]openai.ChatCompletionMessageP
 		case "assistant":
 			param = openai.AssistantMessage(msg.Content)
 		case "developer":
-			param = openai.DeveloperMessage(msg.Content)
+			// Developer role is not supported by every OpenAI-compatible API.
+			// Treat it as a system instruction to remain compatible.
+			param = openai.SystemMessage(msg.Content)
 		default:
 			return nil, fmt.Errorf("unsupported message role %q", msg.Role)
 		}

@@ -194,22 +194,20 @@ func diffAgainstBaseBranch(ctx context.Context, branch string) (string, string, 
 }
 
 func resolveBaseBranch(ctx context.Context, branch string) (string, string, error) {
-	remote := branchRemote(ctx, branch)
-
-	baseBranch := ""
-	headRef, _ := runGit(ctx, "symbolic-ref", fmt.Sprintf("refs/remotes/%s/HEAD", remote))
-	if headRef != "" {
-		prefix := fmt.Sprintf("refs/remotes/%s/", remote)
-		baseBranch = strings.TrimPrefix(strings.TrimSpace(headRef), prefix)
-	}
-
-	if baseBranch == "" {
-		baseBranch = "main"
-	}
-
-	baseRef, err := runGit(ctx, "rev-parse", "--verify", baseBranch)
+	remote, err := branchRemote(ctx, branch)
 	if err != nil {
-		return "", "", fmt.Errorf("unable to resolve %s: %w", baseBranch, err)
+		return "", "", err
+	}
+
+	baseBranch, err := detectDefaultBaseBranch(ctx, remote)
+	if err != nil {
+		return "", "", err
+	}
+
+	remoteRef := fmt.Sprintf("refs/remotes/%s/%s", remote, baseBranch)
+	baseRef, err := runGit(ctx, "rev-parse", "--verify", remoteRef)
+	if err != nil {
+		return "", "", fmt.Errorf("unable to resolve %s: %w", remoteRef, err)
 	}
 
 	return strings.TrimSpace(baseRef), baseBranch, nil
@@ -304,8 +302,90 @@ func runGH(ctx context.Context, args ...string) (string, error) {
 	cmd.Stderr = &stderr
 
 	if err := cmd.Run(); err != nil {
-		return "", fmt.Errorf("gh %s failed: %s", strings.Join(args, " "), strings.TrimSpace(stderr.String()))
+		return "", fmt.Errorf("gh %s failed: %s", strings.Join(args, " "), sanitizeCommandOutput(stderr.String()))
 	}
 
 	return stdout.String(), nil
+}
+
+func detectDefaultBaseBranch(ctx context.Context, remote string) (string, error) {
+	candidates := []string{
+		remoteHeadBranch(ctx, remote),
+		configDefaultBranch(ctx),
+		"main",
+		"master",
+	}
+
+	seen := make(map[string]struct{})
+	for _, candidate := range candidates {
+		candidate = strings.TrimSpace(candidate)
+		if candidate == "" {
+			continue
+		}
+		if _, ok := seen[candidate]; ok {
+			continue
+		}
+		seen[candidate] = struct{}{}
+
+		if remoteBranchExists(ctx, remote, candidate) {
+			return candidate, nil
+		}
+	}
+
+	return "", fmt.Errorf("unable to determine a default branch for remote %s", remote)
+}
+
+func remoteHeadBranch(ctx context.Context, remote string) string {
+	ref := fmt.Sprintf("refs/remotes/%s/HEAD", remote)
+	if headRef, err := runGit(ctx, "symbolic-ref", ref); err == nil {
+		prefix := fmt.Sprintf("refs/remotes/%s/", remote)
+		return strings.TrimPrefix(strings.TrimSpace(headRef), prefix)
+	}
+
+	output, err := runGit(ctx, "remote", "show", remote)
+	if err != nil {
+		return ""
+	}
+
+	for _, line := range strings.Split(output, "\n") {
+		line = strings.TrimSpace(line)
+		if strings.HasPrefix(line, "HEAD branch:") {
+			return strings.TrimSpace(strings.TrimPrefix(line, "HEAD branch:"))
+		}
+	}
+
+	return ""
+}
+
+func configDefaultBranch(ctx context.Context) string {
+	output, err := runGit(ctx, "config", "init.defaultbranch")
+	if err != nil {
+		return ""
+	}
+	return strings.TrimSpace(output)
+}
+
+func remoteBranchExists(ctx context.Context, remote, branch string) bool {
+	if remote == "" || branch == "" {
+		return false
+	}
+
+	ref := fmt.Sprintf("refs/remotes/%s/%s", remote, branch)
+	if _, err := runGit(ctx, "rev-parse", "--verify", ref); err != nil {
+		return false
+	}
+	return true
+}
+
+func sanitizeCommandOutput(output string) string {
+	trimmed := strings.TrimSpace(output)
+	if trimmed == "" {
+		return "no additional details"
+	}
+
+	const maxLen = 512
+	if len(trimmed) > maxLen {
+		return trimmed[:maxLen] + "... (truncated)"
+	}
+	return trimmed
 }

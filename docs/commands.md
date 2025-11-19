@@ -66,49 +66,68 @@ Flags:
   -f, --format string Output format (json|yaml|text) (default "text")
 ```
 
-### commit
+### commit _(Since v0.3.0)_
 
-Generate an AI-assisted conventional commit message for staged or selected files and create the commit.
+Generate an AI-assisted conventional commit message for staged or selected files and create the commit with a single command. The wizard validates the final summary, shows the hook output if a pre-commit hook blocks the commit, and never persists AI responses on disk.
 
+**Interactive example**
 ```bash
-# Use currently staged files
-magi commit
-
-# Select unstaged files interactively and let magi commit them
+# Let magi ask which unstaged files should be included
 magi commit
 ```
 
-Security callout:
-- Sends only the git diff for the selected files to your configured AI provider in order to craft the commit message.
-- No other project metadata or secrets leave your machine.
-- Warns when a local pre-commit hook is detected and surfaces the hook output if it blocks the commit so you can fix the reported issues.
+**Non-interactive example**
+```bash
+# Stage files manually so magi skips the selection prompt
+git add pkg/foo pkg/bar && magi commit
+```
 
-### push
+Security callout:
+- Sends only the git diff for the selected files to your configured AI provider to generate the commit summary; no other file contents or metadata leave the machine.
+- Shells out to `git` with explicit arguments and surfaces hook output without logging the full git stdout, protecting secrets printed by hooks.
+- Requires a configured AI provider/API key via `magi config` so secrets are never requested ad hoc.
+
+### push _(Since v0.3.0)_
 
 Push the current branch to its upstream remote. magi automatically detects when the branch has no upstream configured and re-runs the push with `--set-upstream` so you only invoke the command once.
 
+**Interactive example**
 ```bash
-# Push normally; magi will add --set-upstream the first time
+# Warns if a pre-push hook is present before delegating to git push
 magi push
+```
+
+**Non-interactive example**
+```bash
+# Use in scripts/CI to guarantee --set-upstream is supplied when needed
+magi push >/tmp/push.log
 ```
 
 Security callout:
 - Relies entirely on your local git installation; no new data is sent to remote services beyond what git already transmits for a push.
 - Warns when a pre-push hook exists and prints the hook output if the hook blocks the push.
 
-### pr
+### pr _(Since v0.3.0)_
 
 Run an AgenticGoKit review of the local commits that differ from `origin/<branch>`, fill `.github/pull_request_template.md`, and open a GitHub pull request with the `gh` CLI. The command asks for extra context before invoking the agents, prints the generated review and template, and only creates the PR after you confirm.
 
+**Interactive example**
 ```bash
-# Review local commits, fill the template, and open a PR
+# Answer prompts for extra context and confirmation before the PR is created
 magi pr
+```
+
+**Non-interactive example**
+```bash
+# Pipe confirmation to run inside scripts while still reviewing diffs securely
+yes | magi pr
 ```
 
 Security callout:
 - Sends only the diff between `HEAD` and `origin/<branch>`, AGENTS.md contents, and any optional user-provided notes to the configured AI provider.
-- Uses the hardened HTTP client and never logs raw model responses that might contain secrets.
-- Shells out to `git` and `gh` with explicit arguments; no other tools are executed.
+- Uses the hardened HTTP client, enforces TLS 1.2+, and never logs raw model responses that might contain secrets (redacted copies are stored when needed).
+- Shells out to `git` and `gh` with explicit argument arrays after confirming the local branch is pushed and sanitized hook output is surfaced.
+- Documents outbound data (diff + AGENTS guidelines) in the command help text so users know exactly what leaves their machine.
 
 ## Additional Commands
 
