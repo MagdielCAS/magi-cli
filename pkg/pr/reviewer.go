@@ -216,8 +216,13 @@ func (r *AgenticReviewer) selectModel(preferLight bool) (modelSelection, error) 
 		baseURL = strings.TrimSpace(r.runtime.BaseURL)
 	}
 
+	provider := strings.TrimSpace(pick.endpoint.Provider)
+	if provider == "" {
+		provider = strings.TrimSpace(r.runtime.Provider)
+	}
+
 	return modelSelection{
-		provider: strings.TrimSpace(strings.ToLower(r.runtime.Provider)),
+		provider: strings.ToLower(provider),
 		model:    pick.model,
 		apiKey:   apiKey,
 		baseURL:  baseURL,
@@ -233,6 +238,8 @@ func withAPIKey(key string) vnext.Option {
 func withBaseURL(baseURL string) vnext.Option {
 	return func(cfg *vnext.Config) {
 		cfg.LLM.BaseURL = strings.TrimSpace(baseURL)
+		cfg.LLM.SiteURL = "https://magdielcas.github.io/magi-cli/"
+		cfg.LLM.SiteName = "magi-cli"
 	}
 }
 
