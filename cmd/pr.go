@@ -212,7 +212,7 @@ func resolveBaseBranch(ctx context.Context, branch string) (string, string, erro
 		return "", "", fmt.Errorf("unable to resolve %s: %w", baseBranch, err)
 	}
 
-	return baseRef, baseBranch, nil
+	return strings.TrimSpace(baseRef), baseBranch, nil
 }
 
 func repoRootPath(ctx context.Context) (string, error) {
