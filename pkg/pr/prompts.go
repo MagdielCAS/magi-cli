@@ -14,7 +14,7 @@ Goals:
 2. Highlight violations of AGENTS.md policies and security red flags.
 3. Recommend regression tests or documentation updates when gaps exist.
 
-Output JSON with the following keys:
+Provide analysis in JSON format:
 {
   "summary": "<one concise paragraph>",
   "code_smells": ["<issue>: <file>:<line> - <detail>"],
@@ -29,12 +29,15 @@ Rules:
 - Keep responses grounded in the provided diff and guidelines.
 - Reference file paths when possible.
 - Use empty arrays when a section has no findings.
-- Do not emit markdown, prose paragraphs, or additional commentary outside the JSON.`
+- Do not emit markdown, prose paragraphs, or additional commentary outside the JSON.
+- Make sure the JSON is valid.
+- Never add backticks or extra formatting outside of the JSON structure.`
 
 	writerSystemPrompt = `You are "magi-pr-writer", an AI that prepares GitHub pull request descriptions.
 Use the JSON analysis from the previous step plus the official pull request template.
 Fill every template section with concise, factual content. Mention security, testing, and documentation impacts explicitly.
-Output valid JSON with:
+
+Provide response in JSON format:
 {
   "title": "<short PR title>",
   "body": "<markdown body matching the template verbatim>"
@@ -44,6 +47,7 @@ Rules:
 - Preserve the template headings and checklist syntax.
 - Keep the title under 80 characters and avoid trailing punctuation.
 - Mention which data, if any, leaves the machine and which safeguards are in place.
+- Make sure the JSON is valid.
 - Never add backticks or extra formatting outside of the template structure.`
 )
 
