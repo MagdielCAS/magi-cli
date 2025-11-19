@@ -186,7 +186,6 @@ func diffAgainstBaseBranch(ctx context.Context, branch string) (string, string, 
 		return "", "", "", err
 	}
 
-	fmt.Printf("%s: %s\n", baseRef, strings.TrimSpace(diff))
 	if strings.TrimSpace(diff) == "" {
 		return "", "", "", fmt.Errorf("no differences detected between HEAD and %s", baseRef)
 	}
@@ -197,18 +196,11 @@ func diffAgainstBaseBranch(ctx context.Context, branch string) (string, string, 
 func resolveBaseBranch(ctx context.Context, branch string) (string, string, error) {
 	remote := branchRemote(ctx, branch)
 
-	mergeRef, err := runGit(ctx, "config", fmt.Sprintf("branch.%s.merge", branch))
 	baseBranch := ""
-	if err == nil {
-		baseBranch = strings.TrimPrefix(strings.TrimSpace(mergeRef), "refs/heads/")
-	}
-
-	if baseBranch == "" {
-		headRef, headErr := runGit(ctx, "symbolic-ref", fmt.Sprintf("refs/remotes/%s/HEAD", remote))
-		if headErr == nil {
-			prefix := fmt.Sprintf("refs/remotes/%s/", remote)
-			baseBranch = strings.TrimPrefix(strings.TrimSpace(headRef), prefix)
-		}
+	headRef, _ := runGit(ctx, "symbolic-ref", fmt.Sprintf("refs/remotes/%s/HEAD", remote))
+	if headRef != "" {
+		prefix := fmt.Sprintf("refs/remotes/%s/", remote)
+		baseBranch = strings.TrimPrefix(strings.TrimSpace(headRef), prefix)
 	}
 
 	if baseBranch == "" {
@@ -219,8 +211,6 @@ func resolveBaseBranch(ctx context.Context, branch string) (string, string, erro
 	if err != nil {
 		return "", "", fmt.Errorf("unable to resolve %s: %w", baseBranch, err)
 	}
-
-	baseRef = strings.Trim(baseRef, "\n")
 
 	return baseRef, baseBranch, nil
 }
