@@ -28,8 +28,9 @@ type RuntimeContext struct {
 
 // ModelEndpoint describes the credentials and endpoint overrides for a specific model class.
 type ModelEndpoint struct {
-	APIKey  string
-	BaseURL string
+	APIKey   string
+	BaseURL  string
+	Provider string
 }
 
 var (
@@ -75,16 +76,19 @@ func BuildRuntimeContext() (*RuntimeContext, error) {
 		HeavyModel: strings.TrimSpace(viper.GetString("api.heavy_model")),
 		Fallback:   strings.TrimSpace(viper.GetString("api.fallback_model")),
 		LightEndpoint: ModelEndpoint{
-			APIKey:  fallbackString(strings.TrimSpace(viper.GetString("api.light.api_key")), apiKey),
-			BaseURL: fallbackString(strings.TrimSpace(viper.GetString("api.light.base_url")), globalBaseURL),
+			APIKey:   fallbackString(strings.TrimSpace(viper.GetString("api.light.api_key")), apiKey),
+			BaseURL:  fallbackString(strings.TrimSpace(viper.GetString("api.light.base_url")), globalBaseURL),
+			Provider: fallbackString(strings.TrimSpace(viper.GetString("api.light.provider")), provider),
 		},
 		HeavyEndpoint: ModelEndpoint{
-			APIKey:  fallbackString(strings.TrimSpace(viper.GetString("api.heavy.api_key")), apiKey),
-			BaseURL: fallbackString(strings.TrimSpace(viper.GetString("api.heavy.base_url")), globalBaseURL),
+			APIKey:   fallbackString(strings.TrimSpace(viper.GetString("api.heavy.api_key")), apiKey),
+			BaseURL:  fallbackString(strings.TrimSpace(viper.GetString("api.heavy.base_url")), globalBaseURL),
+			Provider: fallbackString(strings.TrimSpace(viper.GetString("api.heavy.provider")), provider),
 		},
 		FallbackEndpoint: ModelEndpoint{
-			APIKey:  fallbackString(strings.TrimSpace(viper.GetString("api.fallback.api_key")), apiKey),
-			BaseURL: fallbackString(strings.TrimSpace(viper.GetString("api.fallback.base_url")), globalBaseURL),
+			APIKey:   fallbackString(strings.TrimSpace(viper.GetString("api.fallback.api_key")), apiKey),
+			BaseURL:  fallbackString(strings.TrimSpace(viper.GetString("api.fallback.base_url")), globalBaseURL),
+			Provider: fallbackString(strings.TrimSpace(viper.GetString("api.fallback.provider")), provider),
 		},
 		HTTPClient: DefaultHTTPClient(),
 	}
