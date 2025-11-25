@@ -93,8 +93,8 @@ func BuildRuntimeContext() (*RuntimeContext, error) {
 			Provider: fallbackString(strings.TrimSpace(viper.GetString("api.fallback.provider")), provider),
 		},
 		HTTPClient:      DefaultHTTPClient(),
-		AnalysisTimeout: getDurationOrDefault("agent.analysis.timeout", 3*time.Minute),
-		WriterTimeout:   getDurationOrDefault("agent.writer.timeout", 2*time.Minute),
+		AnalysisTimeout: getDurationOrDefault("agent.analysis.timeout", 5*time.Minute),
+		WriterTimeout:   getDurationOrDefault("agent.writer.timeout", 5*time.Minute),
 	}
 
 	return ctx, nil
