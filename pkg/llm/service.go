@@ -10,9 +10,9 @@ import (
 	"net/http"
 	"strings"
 
-	openai "github.com/openai/openai-go"
-	"github.com/openai/openai-go/option"
-	openaiShared "github.com/openai/openai-go/shared"
+	openai "github.com/openai/openai-go/v3"
+	"github.com/openai/openai-go/v3/option"
+	openaiShared "github.com/openai/openai-go/v3/shared"
 
 	"github.com/MagdielCAS/magi-cli/pkg/shared"
 )
@@ -168,6 +168,7 @@ type ChatCompletionRequest struct {
 	TopP             float64
 	FrequencyPenalty float64
 	PresencePenalty  float64
+	ResponseFormat   *openai.ChatCompletionNewParamsResponseFormatUnion
 }
 
 // ChatCompletion sends a chat completion request and returns the assistant response text.
@@ -204,6 +205,9 @@ func (s *Service) ChatCompletion(ctx context.Context, req ChatCompletionRequest)
 	}
 	if req.PresencePenalty != 0 {
 		params.PresencePenalty = openai.Float(req.PresencePenalty)
+	}
+	if req.ResponseFormat != nil {
+		params.ResponseFormat = *req.ResponseFormat
 	}
 
 	resp, err := s.client.Chat.Completions.New(ctx, params)
