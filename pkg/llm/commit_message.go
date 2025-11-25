@@ -7,41 +7,62 @@ package llm
 import (
 	"bytes"
 	"context"
+	"encoding/json"
 	"fmt"
 	"strings"
 	"text/template"
 
+	openai "github.com/openai/openai-go/v3"
+	openaiShared "github.com/openai/openai-go/v3/shared"
 	"github.com/tiktoken-go/tokenizer"
 
 	"github.com/MagdielCAS/magi-cli/pkg/shared"
 )
 
+var (
+	CommitSchema = &openai.ChatCompletionNewParamsResponseFormatUnion{
+		OfJSONSchema: &openaiShared.ResponseFormatJSONSchemaParam{
+			JSONSchema: openaiShared.ResponseFormatJSONSchemaJSONSchemaParam{
+				Name:        "commit_message",
+				Description: openai.String("A conventional commit message"),
+				Schema: interface{}(map[string]interface{}{
+					"type": "object",
+					"properties": map[string]interface{}{
+						"type":        map[string]interface{}{"type": "string", "enum": []string{"feat", "fix", "docs", "style", "refactor", "perf", "test", "build", "ci", "chore", "revert"}},
+						"scope":       map[string]interface{}{"type": "string"},
+						"gitmoji":     map[string]interface{}{"type": "string"},
+						"description": map[string]interface{}{"type": "string"},
+					},
+					"required":             []string{"type", "scope", "gitmoji", "description"},
+					"additionalProperties": false,
+				}),
+				Strict: openai.Bool(true),
+			},
+		},
+	}
+)
+
 const (
 	commitSystemPrompt = "You are an expert assistant that writes conventional commit messages."
-	commitUserPrompt   = `Analyze the provided git diff and generate a single-line commit message.
+	commitUserPrompt   = `Analyze the provided git diff and generate a structured commit message.
 
 Rules:
-1. Message format must be <type>(<scope>): <gitmoji> <description>
-2. Allowed types: feat, fix, docs, style, refactor, perf, test, build, ci, chore, revert
-3. Scope must be a short, meaningful noun (e.g., cli, api, docs)
-4. Description must be a short summary of the change in present tense (e.g., add, fix, update). Do not capitalize. Do not end with a period.
-5. Pick one appropriate gitmoji from this list: ✨, 🐛, 📚, 🎨, ♻️, ⚡️, ✅, 🔧, 👷, 🔨, ⏪️. Use the unicode emoji, not shortcodes.
-6. The entire message must be a single line.
-7. Your response must only contain the commit message. Do not include any other text, explanations, or code blocks.
+1. Type must be one of: feat, fix, docs, style, refactor, perf, test, build, ci, chore, revert
+2. Scope must be a short, meaningful noun (e.g., cli, api, docs)
+3. Description must be a short summary of the change in present tense (e.g., add, fix, update). Do not capitalize. Do not end with a period.
+4. Gitmoji must be one appropriate unicode emoji from: ✨, 🐛, 📚, 🎨, ♻️, ⚡️, ✅, 🔧, 👷, 🔨, ⏪️.
 
 Git diff to analyze:
 ` + "```diff\n{{.Diff}}\n```"
 	fixCommitUserPrompt = `You previously proposed a commit message that failed validation.
 
-Review the original diff and craft a corrected single-line commit message that obeys all rules.
+Review the original diff and craft a corrected commit message that obeys all rules.
 
 Rules:
-1. Message format must be <type>(<scope>): <gitmoji> <description>
-2. Allowed types: feat, fix, docs, style, refactor, perf, test, build, ci, chore, revert
-3. Scope must be a short, meaningful noun (e.g., cli, api, docs)
-4. Description must be a short summary of the change in present tense (e.g., add, fix, update). Do not capitalize. Do not end with a period.
-5. Pick one appropriate gitmoji from this list: ✨, 🐛, 📚, 🎨, ♻️, ⚡️, ✅, 🔧, 👷, 🔨, ⏪️. Use the unicode emoji, not shortcodes.
-6. The entire message must be a single line and must not include explanations or code blocks.
+1. Type must be one of: feat, fix, docs, style, refactor, perf, test, build, ci, chore, revert
+2. Scope must be a short, meaningful noun (e.g., cli, api, docs)
+3. Description must be a short summary of the change in present tense (e.g., add, fix, update). Do not capitalize. Do not end with a period.
+4. Gitmoji must be one appropriate unicode emoji from: ✨, 🐛, 📚, 🎨, ♻️, ⚡️, ✅, 🔧, 👷, 🔨, ⏪️.
 
 Context:
 ` + "```diff\n{{.Diff}}\n```" + `
@@ -52,7 +73,7 @@ Previous invalid commit message:
 Validation feedback:
 {{.ValidationError}}
 
-Respond only with the corrected commit message.`
+Respond with the corrected commit message structure.`
 )
 
 var (
@@ -93,7 +114,7 @@ func GenerateCommitMessage(ctx context.Context, runtime *shared.RuntimeContext, 
 			count = 2048
 		}
 		// commit msg length + an estimative of prompt tokens + 10% error margin
-		maxTokens = 100 + float64(count)*1.1
+		maxTokens = 500 + float64(count)*1.1
 	}
 
 	message, err := service.ChatCompletion(ctx, ChatCompletionRequest{
@@ -101,14 +122,15 @@ func GenerateCommitMessage(ctx context.Context, runtime *shared.RuntimeContext, 
 			{Role: "system", Content: commitSystemPrompt},
 			{Role: "user", Content: prompt},
 		},
-		Temperature: 0.0,
-		MaxTokens:   maxTokens,
+		Temperature:    0.0,
+		MaxTokens:      maxTokens,
+		ResponseFormat: CommitSchema,
 	})
 	if err != nil {
 		return "", err
 	}
 
-	return message, nil
+	return parseCommitMessage(message)
 }
 
 func renderCommitPrompt(diff string) (string, error) {
@@ -150,14 +172,15 @@ func FixCommitMessage(ctx context.Context, runtime *shared.RuntimeContext, diff,
 			{Role: "system", Content: commitSystemPrompt},
 			{Role: "user", Content: prompt},
 		},
-		Temperature: 0.0,
-		MaxTokens:   200,
+		Temperature:    0.0,
+		MaxTokens:      500,
+		ResponseFormat: CommitSchema,
 	})
 	if err != nil {
 		return "", err
 	}
 
-	return message, nil
+	return parseCommitMessage(message)
 }
 
 func renderFixCommitPrompt(diff, previous string, validationErr error) (string, error) {
@@ -185,4 +208,20 @@ func formatValidationError(err error) string {
 		return "Unknown validation error."
 	}
 	return err.Error()
+}
+
+func parseCommitMessage(jsonStr string) (string, error) {
+	var result struct {
+		Type        string `json:"type"`
+		Scope       string `json:"scope"`
+		Gitmoji     string `json:"gitmoji"`
+		Description string `json:"description"`
+	}
+
+	if err := json.Unmarshal([]byte(jsonStr), &result); err != nil {
+		return "", fmt.Errorf("failed to parse commit message JSON: %w", err)
+	}
+
+	// Format: <type>(<scope>): <gitmoji> <description>
+	return fmt.Sprintf("%s(%s): %s %s", result.Type, result.Scope, result.Gitmoji, result.Description), nil
 }

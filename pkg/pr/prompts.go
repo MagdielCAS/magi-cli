@@ -5,6 +5,62 @@ import (
 	"fmt"
 	"strings"
 	"text/template"
+
+	openai "github.com/openai/openai-go/v3"
+	openaiShared "github.com/openai/openai-go/v3/shared"
+)
+
+var (
+	AnalysisSchema = &openai.ChatCompletionNewParamsResponseFormatUnion{
+		OfJSONSchema: &openaiShared.ResponseFormatJSONSchemaParam{
+			JSONSchema: openaiShared.ResponseFormatJSONSchemaJSONSchemaParam{
+				Name:        "analysis_result",
+				Description: openai.String("The analysis result of the PR"),
+				Schema: interface{}(map[string]interface{}{
+					"type": "object",
+					"properties": map[string]interface{}{
+						"summary":                 map[string]interface{}{"type": "string"},
+						"code_smells":             map[string]interface{}{"type": "array", "items": map[string]interface{}{"type": "string"}},
+						"security_concerns":       map[string]interface{}{"type": "array", "items": map[string]interface{}{"type": "string"}},
+						"agents_guideline_alerts": map[string]interface{}{"type": "array", "items": map[string]interface{}{"type": "string"}},
+						"test_recommendations":    map[string]interface{}{"type": "array", "items": map[string]interface{}{"type": "string"}},
+						"documentation_updates":   map[string]interface{}{"type": "array", "items": map[string]interface{}{"type": "string"}},
+						"risk_callouts":           map[string]interface{}{"type": "array", "items": map[string]interface{}{"type": "string"}},
+					},
+					"required": []string{
+						"summary",
+						"code_smells",
+						"security_concerns",
+						"agents_guideline_alerts",
+						"test_recommendations",
+						"documentation_updates",
+						"risk_callouts",
+					},
+					"additionalProperties": false,
+				}),
+				Strict: openai.Bool(true),
+			},
+		},
+	}
+
+	WriterSchema = &openai.ChatCompletionNewParamsResponseFormatUnion{
+		OfJSONSchema: &openaiShared.ResponseFormatJSONSchemaParam{
+			JSONSchema: openaiShared.ResponseFormatJSONSchemaJSONSchemaParam{
+				Name:        "pr_content",
+				Description: openai.String("The PR title and body"),
+				Schema: interface{}(map[string]interface{}{
+					"type": "object",
+					"properties": map[string]interface{}{
+						"title": map[string]interface{}{"type": "string"},
+						"body":  map[string]interface{}{"type": "string"},
+					},
+					"required":             []string{"title", "body"},
+					"additionalProperties": false,
+				}),
+				Strict: openai.Bool(true),
+			},
+		},
+	}
 )
 
 const (
