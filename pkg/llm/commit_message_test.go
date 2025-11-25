@@ -16,7 +16,7 @@ func TestRenderCommitPrompt(t *testing.T) {
 		t.Fatalf("prompt did not include diff content")
 	}
 
-	if !strings.Contains(prompt, "Message format must be") {
+	if !strings.Contains(prompt, "Rules:") {
 		t.Fatalf("prompt is missing commit rules")
 	}
 }

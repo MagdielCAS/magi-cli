@@ -24,6 +24,8 @@ type RuntimeContext struct {
 	HeavyEndpoint    ModelEndpoint
 	FallbackEndpoint ModelEndpoint
 	HTTPClient       *http.Client
+	AnalysisTimeout  time.Duration
+	WriterTimeout    time.Duration
 }
 
 // ModelEndpoint describes the credentials and endpoint overrides for a specific model class.
@@ -90,7 +92,9 @@ func BuildRuntimeContext() (*RuntimeContext, error) {
 			BaseURL:  fallbackString(strings.TrimSpace(viper.GetString("api.fallback.base_url")), globalBaseURL),
 			Provider: fallbackString(strings.TrimSpace(viper.GetString("api.fallback.provider")), provider),
 		},
-		HTTPClient: DefaultHTTPClient(),
+		HTTPClient:      DefaultHTTPClient(),
+		AnalysisTimeout: getDurationOrDefault("agent.analysis.timeout", 3*time.Minute),
+		WriterTimeout:   getDurationOrDefault("agent.writer.timeout", 2*time.Minute),
 	}
 
 	return ctx, nil
@@ -121,4 +125,12 @@ func fallbackString(primary, fallback string) string {
 		return primary
 	}
 	return fallback
+}
+
+func getDurationOrDefault(key string, defaultVal time.Duration) time.Duration {
+	val := viper.GetDuration(key)
+	if val == 0 {
+		return defaultVal
+	}
+	return val
 }

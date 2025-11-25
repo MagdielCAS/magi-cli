@@ -3,7 +3,6 @@ package pr
 import (
 	"context"
 	"fmt"
-	"time"
 
 	"github.com/MagdielCAS/magi-cli/pkg/llm"
 	"github.com/MagdielCAS/magi-cli/pkg/shared"
@@ -58,7 +57,7 @@ func (a *AnalysisAgent) Execute(input map[string]string) (string, error) {
 		ResponseFormat: AnalysisSchema,
 	}
 
-	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Minute)
+	ctx, cancel := context.WithTimeout(context.Background(), a.runtime.AnalysisTimeout)
 	defer cancel()
 
 	return service.ChatCompletion(ctx, req)
@@ -90,7 +89,13 @@ func (a *WriterAgent) Execute(input map[string]string) (string, error) {
 	// We need template and branch to render the writer payload.
 	// These should be passed in the initial input.
 	templateContent := input["template"]
+	if templateContent == "" {
+		return "", fmt.Errorf("template is missing")
+	}
 	branch := input["branch"]
+	if branch == "" {
+		return "", fmt.Errorf("branch is missing")
+	}
 
 	writerPayload, err := renderWriterPayload(writerPayloadParams{
 		AnalysisJSON: analysisJSON,
@@ -120,7 +125,7 @@ func (a *WriterAgent) Execute(input map[string]string) (string, error) {
 		ResponseFormat: WriterSchema,
 	}
 
-	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Minute)
+	ctx, cancel := context.WithTimeout(context.Background(), a.runtime.WriterTimeout)
 	defer cancel()
 
 	return service.ChatCompletion(ctx, req)
