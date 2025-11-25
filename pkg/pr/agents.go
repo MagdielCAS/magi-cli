@@ -3,6 +3,7 @@ package pr
 import (
 	"context"
 	"fmt"
+	"strings"
 
 	"github.com/MagdielCAS/magi-cli/pkg/llm"
 	"github.com/MagdielCAS/magi-cli/pkg/shared"
@@ -37,12 +38,11 @@ func (a *AnalysisAgent) Execute(input map[string]string) (string, error) {
 		return "", fmt.Errorf("payload is missing")
 	}
 
-	// Build LLM service
-	builder := llm.NewServiceBuilder(a.runtime).
-		UseHeavyModel() // Analysis uses heavy model (or configured preference)
-
-	// We can allow overriding via input if needed, but for now stick to defaults
-	service, err := builder.Build()
+	service, err := buildServiceWithFallback(a.runtime, []llm.ModelVariant{
+		llm.ModelVariantHeavy,
+		llm.ModelVariantFallback,
+		llm.ModelVariantLight,
+	})
 	if err != nil {
 		return "", fmt.Errorf("failed to build LLM service: %w", err)
 	}
@@ -106,11 +106,11 @@ func (a *WriterAgent) Execute(input map[string]string) (string, error) {
 		return "", fmt.Errorf("failed to render writer payload: %w", err)
 	}
 
-	// Build LLM service - Writer uses light model
-	builder := llm.NewServiceBuilder(a.runtime).
-		UseLightModel()
-
-	service, err := builder.Build()
+	service, err := buildServiceWithFallback(a.runtime, []llm.ModelVariant{
+		llm.ModelVariantLight,
+		llm.ModelVariantHeavy,
+		llm.ModelVariantFallback,
+	})
 	if err != nil {
 		return "", fmt.Errorf("failed to build LLM service: %w", err)
 	}
@@ -129,4 +129,65 @@ func (a *WriterAgent) Execute(input map[string]string) (string, error) {
 	defer cancel()
 
 	return service.ChatCompletion(ctx, req)
+}
+
+func buildServiceWithFallback(runtime *shared.RuntimeContext, variants []llm.ModelVariant) (*llm.Service, error) {
+	var firstErr error
+
+	for _, variant := range variants {
+		if !variantConfigured(runtime, variant) {
+			continue
+		}
+
+		builder := llm.NewServiceBuilder(runtime)
+		switch variant {
+		case llm.ModelVariantLight:
+			builder.UseLightModel()
+		case llm.ModelVariantFallback:
+			builder.UseFallbackModel()
+		default:
+			builder.UseHeavyModel()
+		}
+
+		service, err := builder.Build()
+		if err == nil {
+			return service, nil
+		}
+		if firstErr == nil {
+			firstErr = err
+		}
+	}
+
+	if firstErr != nil {
+		return nil, firstErr
+	}
+
+	return nil, fmt.Errorf("no configured model found for variants %s", stringifyVariants(variants))
+}
+
+func variantConfigured(runtime *shared.RuntimeContext, variant llm.ModelVariant) bool {
+	switch variant {
+	case llm.ModelVariantLight:
+		return strings.TrimSpace(runtime.LightModel) != ""
+	case llm.ModelVariantFallback:
+		return strings.TrimSpace(runtime.Fallback) != ""
+	default:
+		return strings.TrimSpace(runtime.HeavyModel) != ""
+	}
+}
+
+func stringifyVariants(variants []llm.ModelVariant) string {
+	labels := make([]string, 0, len(variants))
+	for _, variant := range variants {
+		switch variant {
+		case llm.ModelVariantLight:
+			labels = append(labels, "light")
+		case llm.ModelVariantFallback:
+			labels = append(labels, "fallback")
+		default:
+			labels = append(labels, "heavy")
+		}
+	}
+
+	return strings.Join(labels, ", ")
 }
