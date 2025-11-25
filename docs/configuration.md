@@ -62,6 +62,11 @@ cache:
 - `cache.enabled`: Enable/disable response caching
 - `cache.ttl`: Cache time-to-live in seconds
 
+### Agent Settings _(Since v0.4.0)_
+
+- `agent.analysis.timeout`: Timeout for the analysis agent (default `3m`).
+- `agent.writer.timeout`: Timeout for the writer agent (default `2m`).
+
 ## Pull Request Command Settings _(Since v0.3.0)_
 
 The `magi pr` command reuses the API configuration above and additionally expects:
@@ -84,4 +89,8 @@ magi config set api.base_url https://api.openai.com/v1
 # Override only the heavy model endpoint
 magi config set api.heavy.api_key sk-heavy-only
 magi config set api.heavy.base_url https://enterprise-gateway.example.com/v1
+
+# Set agent timeouts
+magi config set agent.analysis.timeout 5m
+magi config set agent.writer.timeout 3m
 ```

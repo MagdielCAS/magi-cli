@@ -1,3 +1,13 @@
+// Package agent provides a simple agent orchestration framework.
+//
+// It allows defining agents with dependencies and executing them in parallel
+// while respecting the dependency graph.
+//
+// Example Usage:
+//
+//	pool := agent.NewAgentPool()
+//	pool.WithAgent(myAgent)
+//	results, err := pool.ExecuteAgents(initialInput)
 package agent
 
 import (
@@ -56,21 +66,33 @@ func (am *AgentPool) ExecuteAgents(initialInput map[string]string) (map[string]s
 			}
 
 			for _, dep := range agent.WaitForResults() {
-				// Wait for dependency to finish
+				// Check if dependency is an agent
 				if doneCh, exists := doneChannels[dep]; exists {
+					// Wait for agent to finish
 					<-doneCh
-				} else {
-					// Dependency not found in manager, ignore or error?
-					// For now, we assume it might be in initialInput or just missing.
-					// If it was an agent, we would have found the channel.
-				}
 
-				// Read result safely
-				resultsMu.RLock()
-				if res, ok := results[dep]; ok {
+					// Check if agent produced a result (it might have failed)
+					resultsMu.RLock()
+					res, ok := results[dep]
+					resultsMu.RUnlock()
+
+					if !ok {
+						// Agent failed or didn't produce output
+						errors <- fmt.Errorf("dependency %q failed or produced no output for agent %q", dep, name)
+						// Close channel to prevent deadlocks in dependents (though we are returning)
+						close(doneChannels[name])
+						return
+					}
 					dependencyInputs[dep] = res
+				} else {
+					// Not an agent, must be in initialInput
+					if _, ok := initialInput[dep]; !ok {
+						errors <- fmt.Errorf("dependency %q not found (not an agent and not in initial input) for agent %q", dep, name)
+						close(doneChannels[name])
+						return
+					}
+					// It's already in dependencyInputs because we copied initialInput
 				}
-				resultsMu.RUnlock()
 			}
 
 			// Execute agent actions

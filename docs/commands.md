@@ -128,6 +128,7 @@ Security callout:
 - Uses the hardened HTTP client, enforces TLS 1.2+, and never logs raw model responses that might contain secrets (redacted copies are stored when needed).
 - Shells out to `git` and `gh` with explicit argument arrays after confirming the local branch is pushed and sanitized hook output is surfaced.
 - Documents outbound data (diff + AGENTS guidelines) in the command help text so users know exactly what leaves their machine.
+- Respects configured timeouts for analysis and writing phases (see `magi config`).
 
 ## Additional Commands
 

@@ -103,7 +103,10 @@ func sanitizeForError(output string) string {
 		return ""
 	}
 
-	const maxSnippetLen = 2048
+	// If it looks like JSON but failed parsing, we want to see the structure
+	// to debug why it failed (e.g. extra text, markdown blocks).
+	// We still truncate to avoid flooding logs, but keep enough context.
+	const maxSnippetLen = 4096
 	if len(trimmed) > maxSnippetLen {
 		return trimmed[:maxSnippetLen] + "... (truncated)"
 	}

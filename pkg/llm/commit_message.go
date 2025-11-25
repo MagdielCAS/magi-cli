@@ -115,6 +115,10 @@ func GenerateCommitMessage(ctx context.Context, runtime *shared.RuntimeContext, 
 		}
 		// commit msg length + an estimative of prompt tokens + 10% error margin
 		maxTokens = 500 + float64(count)*1.1
+		// Hard cap to prevent excessive costs/abuse
+		if maxTokens > 4096 {
+			maxTokens = 4096
+		}
 	}
 
 	message, err := service.ChatCompletion(ctx, ChatCompletionRequest{
