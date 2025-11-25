@@ -53,8 +53,9 @@ func (a *AnalysisAgent) Execute(input map[string]string) (string, error) {
 			{Role: "system", Content: analysisSystemPrompt},
 			{Role: "user", Content: payload},
 		},
-		Temperature: 0.2,
-		MaxTokens:   4096,
+		Temperature:    0.2,
+		MaxTokens:      4096,
+		ResponseFormat: AnalysisSchema,
 	}
 
 	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Minute)
@@ -114,8 +115,9 @@ func (a *WriterAgent) Execute(input map[string]string) (string, error) {
 			{Role: "system", Content: writerSystemPrompt},
 			{Role: "user", Content: writerPayload},
 		},
-		Temperature: 0.25,
-		MaxTokens:   2048,
+		Temperature:    0.25,
+		MaxTokens:      2048,
+		ResponseFormat: WriterSchema,
 	}
 
 	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Minute)
