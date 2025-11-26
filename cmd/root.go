@@ -14,6 +14,7 @@ import (
 	"github.com/MagdielCAS/magi-cli/internal/cli/config"
 	"github.com/MagdielCAS/magi-cli/internal/cli/pr"
 	"github.com/MagdielCAS/magi-cli/internal/cli/push"
+	"github.com/MagdielCAS/magi-cli/internal/cli/ssh"
 	"github.com/MagdielCAS/pcli"
 	"github.com/pterm/pterm"
 	"github.com/spf13/cobra"
@@ -130,7 +131,6 @@ func setupPTermFlags() {
 	rootCmd.PersistentFlags().BoolVarP(&pterm.RawOutput, "raw", "", false, "print unstyled raw output")
 	rootCmd.PersistentFlags().BoolVarP(&pcli.DisableUpdateChecking, "disable-update-checks", "", false, "disables update checks")
 }
-
 func loadConfiguration() {
 	viper.AutomaticEnv()
 
@@ -154,16 +154,15 @@ func loadConfiguration() {
 	}
 
 	if err := viper.ReadInConfig(); err != nil {
-		// If config file doesn't exist, create it (only if using default path or if it's the first run)
 		if _, ok := err.(viper.ConfigFileNotFoundError); ok {
-			// We only create the default global config if we are not pointing to a custom file that doesn't exist
-			// Actually, the original logic created it.
-			if cfgFile == "" {
+			// If the config file is not found, create it if it's the default global config path
+			// or if the user explicitly specified the default global config path.
+			if cfgFile == "" || cfgFile == globalConfigPath {
 				if err = viper.SafeWriteConfig(); err != nil {
 					pterm.Error.Printf("Error creating config file: %v\n", err)
 					os.Exit(1)
 				}
-				pterm.Success.Println("New config file created")
+				pterm.Success.Println("New config file created at " + viper.ConfigFileUsed())
 			} else {
 				// Custom config file not found
 				pterm.Error.Printf("Config file not found: %s\n", cfgFile)
@@ -218,6 +217,7 @@ func init() {
 	rootCmd.AddCommand(pr.PRCmd())
 	rootCmd.AddCommand(cliCommit.CommitCmd())
 	rootCmd.AddCommand(config.ConfigCmd())
+	rootCmd.AddCommand(ssh.SSHCmd())
 
 	// Use https://github.com/pterm/pcli to style the output of cobra.
 	pcli.SetRepo("MagdielCAS/magi-cli")
