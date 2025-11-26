@@ -16,27 +16,55 @@ import (
 	"github.com/MagdielCAS/magi-cli/pkg/shared"
 )
 
+var (
+	prDryRun       bool
+	prOutputFile   string
+	prNoComment    bool
+	prOnlyCreate   bool
+	prTargetBranch string
+)
+
 var prCmd = &cobra.Command{
 	Use:   "pr",
 	Short: "Review local commits with AI agents and open a GitHub pull request",
-	Long: `pr scans your local commits that have not been pushed to origin/<branch>, runs an AgenticGoKit
-workflow to review the diff, fills the repository pull request template, and creates the PR via GitHub CLI.
+	Long: `Review local commits and create a GitHub pull request.
+
+This command scans your commits that differ from the upstream branch (default: origin/<branch>),
+runs an AI-powered review workflow to analyze the diff, fills the repository's pull request template,
+and creates the PR using the GitHub CLI ('gh').
 
 Data handling:
   • Sends the git diff between HEAD and origin/<branch>, AGENTS.md contents, and optional user context
     to your configured AI provider.
   • No other files are uploaded.
 
-Usage:
+Security note:
+  • The review agents run with a hardened HTTP client.
+  • API keys are redacted.
+  • Model responses are not persisted unless --output-file is used.
+  • Shells out to 'git' and 'gh' with explicit arguments.`,
+	Example: `  # Interactive mode (default)
   magi pr
 
-Security note: The review agents run with the hardened shared HTTP client, redact API keys, and never
-persist model responses. The command shells out to 'git' and 'gh' with explicit arguments.`,
+  # Dry run and save report to a file
+  magi pr --dry-run --output-file review.md
+
+  # Target a specific branch
+  magi pr --target-branch develop
+
+  # Create PR without commenting findings
+  magi pr --no-comment`,
 	RunE: runPR,
 }
 
 func init() {
 	rootCmd.AddCommand(prCmd)
+
+	prCmd.Flags().BoolVar(&prDryRun, "dry-run", false, "Run the agents and output results, but do not create a PR")
+	prCmd.Flags().StringVar(&prOutputFile, "output-file", "", "Write the agent results to a markdown file")
+	prCmd.Flags().BoolVar(&prNoComment, "no-comment", false, "Do not add the agent findings as a comment to the PR")
+	prCmd.Flags().BoolVar(&prOnlyCreate, "only-create", false, "Create the PR but do not add any comments")
+	prCmd.Flags().StringVar(&prTargetBranch, "target-branch", "", "Specify the target branch for the Pull Request")
 }
 
 func runPR(cmd *cobra.Command, _ []string) error {
@@ -50,6 +78,8 @@ func runPR(cmd *cobra.Command, _ []string) error {
 		return err
 	}
 
+	pterm.Info.Printf("Using models - Analysis: %s | Writer: %s\n", runtimeCtx.HeavyModel, runtimeCtx.LightModel)
+
 	branch, err := currentBranchName(ctx)
 	if err != nil {
 		return err
@@ -60,7 +90,7 @@ func runPR(cmd *cobra.Command, _ []string) error {
 		return err
 	}
 
-	diff, baseRef, baseBranch, err := diffAgainstBaseBranch(ctx, branch)
+	diff, baseRef, baseBranch, err := diffAgainstBaseBranch(ctx, branch, prTargetBranch)
 	if err != nil {
 		return err
 	}
@@ -96,6 +126,21 @@ func runPR(cmd *cobra.Command, _ []string) error {
 
 	logFindings(*artifacts)
 
+	if prDryRun || prOutputFile != "" {
+		report := generateMarkdownReport(*artifacts)
+		if prOutputFile != "" {
+			if err := os.WriteFile(prOutputFile, []byte(report), 0644); err != nil {
+				return fmt.Errorf("failed to write output file: %w", err)
+			}
+			pterm.Success.Printf("Report written to %s\n", prOutputFile)
+		}
+
+		if prDryRun {
+			fmt.Println(report)
+			return nil
+		}
+	}
+
 	confirmed, err := pterm.DefaultInteractiveConfirm.WithDefaultValue(true).
 		Show("Create the pull request with the filled template above?")
 	if err != nil {
@@ -117,8 +162,10 @@ func runPR(cmd *cobra.Command, _ []string) error {
 	}
 
 	comment := pr.FormatFindingsComment(artifacts.Analysis)
-	if err := commentOnPullRequest(ctx, comment); err != nil {
-		return err
+	if !prNoComment && !prOnlyCreate {
+		if err := commentOnPullRequest(ctx, comment); err != nil {
+			return err
+		}
 	}
 
 	pterm.Success.Printf("Pull request created: %s\n", prURL)
@@ -175,10 +222,28 @@ func printList(title string, entries []string) {
 	}
 }
 
-func diffAgainstBaseBranch(ctx context.Context, branch string) (string, string, string, error) {
-	baseRef, baseBranch, err := resolveBaseBranch(ctx, branch)
-	if err != nil {
-		return "", "", "", err
+func diffAgainstBaseBranch(ctx context.Context, branch, targetBranch string) (string, string, string, error) {
+	var baseRef, baseBranch string
+	var err error
+
+	if targetBranch != "" {
+		baseBranch = targetBranch
+		remote, err := branchRemote(ctx, branch)
+		if err != nil {
+			return "", "", "", err
+		}
+
+		remoteRef := fmt.Sprintf("refs/remotes/%s/%s", remote, baseBranch)
+		out, err := runGit(ctx, "rev-parse", "--verify", remoteRef)
+		if err != nil {
+			return "", "", "", fmt.Errorf("unable to resolve target branch %s: %w", remoteRef, err)
+		}
+		baseRef = strings.TrimSpace(out)
+	} else {
+		baseRef, baseBranch, err = resolveBaseBranch(ctx, branch)
+		if err != nil {
+			return "", "", "", err
+		}
 	}
 
 	diff, err := runGit(ctx, "diff", fmt.Sprintf("%s..HEAD", baseRef))
@@ -388,4 +453,17 @@ func sanitizeCommandOutput(output string) string {
 		return trimmed[:maxLen] + "... (truncated)"
 	}
 	return trimmed
+}
+
+func generateMarkdownReport(artifacts pr.ReviewArtifacts) string {
+	var sb strings.Builder
+	sb.WriteString("# Pull Request Plan\n\n")
+	sb.WriteString("## Title\n")
+	sb.WriteString(artifacts.Plan.Title + "\n\n")
+	sb.WriteString("## Body\n")
+	sb.WriteString(artifacts.Plan.Body + "\n\n")
+	sb.WriteString("---\n\n")
+	sb.WriteString("# Agent Findings\n\n")
+	sb.WriteString(pr.FormatFindingsComment(artifacts.Analysis))
+	return sb.String()
 }
