@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"regexp"
 	"strings"
+	"time"
 
 	"github.com/MagdielCAS/magi-cli/pkg/agent"
 	"github.com/MagdielCAS/magi-cli/pkg/llm"
@@ -141,10 +142,28 @@ func (a *TranslationGenerator) WaitForResults() []string {
 
 func (a *TranslationGenerator) Execute(input map[string]string) (string, error) {
 	keysJSON := input["key_extractor"]
+	var keys []I18nKey
+	if err := json.Unmarshal([]byte(keysJSON), &keys); err != nil {
+		return "", fmt.Errorf("failed to parse extracted keys: %w", err)
+	}
 
-	// Construct prompt
+	if len(keys) == 0 {
+		return `{"keys": []}`, nil
+	}
+
 	langs := strings.Join(languages, ", ")
-	prompt := fmt.Sprintf(`You are a professional translator.
+	batchSize := 15 // Process 15 keys at a time to avoid timeouts
+	var allTranslatedKeys []I18nKey
+
+	for i := 0; i < len(keys); i += batchSize {
+		end := i + batchSize
+		if end > len(keys) {
+			end = len(keys)
+		}
+		batch := keys[i:end]
+		batchJSON, _ := json.Marshal(batch)
+
+		prompt := fmt.Sprintf(`You are a professional translator.
 Translate the following i18n keys to %s.
 The input is a JSON array of keys.
 Return a JSON object with the following structure:
@@ -164,29 +183,60 @@ Return a JSON object with the following structure:
 
 Input Keys:
 %s
-`, langs, keysJSON)
+`, langs, string(batchJSON))
 
-	// Call LLM
-	req := llm.ChatCompletionRequest{
-		Messages: []llm.ChatMessage{
-			{Role: "system", Content: "You are a helpful assistant that generates i18n translations."},
-			{Role: "user", Content: prompt},
-		},
-		Temperature: 0.3,
+		req := llm.ChatCompletionRequest{
+			Messages: []llm.ChatMessage{
+				{Role: "system", Content: "You are a helpful assistant that generates i18n translations."},
+				{Role: "user", Content: prompt},
+			},
+			Temperature: 0.3,
+		}
+
+		// Retry logic
+		var response string
+		var err error
+		maxRetries := 3
+		for attempt := 0; attempt < maxRetries; attempt++ {
+			response, err = a.llmService.ChatCompletion(context.Background(), req)
+			if err == nil {
+				break
+			}
+			// Exponential backoff: 2s, 4s, 8s
+			sleepTime := time.Duration(1<<attempt) * 2 * time.Second
+			time.Sleep(sleepTime)
+		}
+
+		if err != nil {
+			return "", fmt.Errorf("failed to translate batch %d-%d after %d retries: %w", i, end, maxRetries, err)
+		}
+
+		// Clean response
+		response = strings.TrimPrefix(response, "```json")
+		response = strings.TrimPrefix(response, "```")
+		response = strings.TrimSuffix(response, "```")
+		response = strings.TrimSpace(response)
+
+		var batchResult TranslationData
+		if err := json.Unmarshal([]byte(response), &batchResult); err != nil {
+			// Try parsing as raw array if the model forgot the wrapper
+			var rawKeys []I18nKey
+			if err2 := json.Unmarshal([]byte(response), &rawKeys); err2 == nil {
+				allTranslatedKeys = append(allTranslatedKeys, rawKeys...)
+				continue
+			}
+			return "", fmt.Errorf("failed to parse batch response: %w", err)
+		}
+		allTranslatedKeys = append(allTranslatedKeys, batchResult.Keys...)
 	}
 
-	response, err := a.llmService.ChatCompletion(context.Background(), req)
+	finalResult := TranslationData{Keys: allTranslatedKeys}
+	finalJSON, err := json.Marshal(finalResult)
 	if err != nil {
-		return "", fmt.Errorf("LLM translation failed: %w", err)
+		return "", fmt.Errorf("failed to marshal final result: %w", err)
 	}
 
-	// Clean response (remove markdown code blocks if any)
-	response = strings.TrimPrefix(response, "```json")
-	response = strings.TrimPrefix(response, "```")
-	response = strings.TrimSuffix(response, "```")
-	response = strings.TrimSpace(response)
-
-	return response, nil
+	return string(finalJSON), nil
 }
 
 // TranslationEnhancer Agent
