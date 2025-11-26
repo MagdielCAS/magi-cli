@@ -83,7 +83,9 @@ func runCommit(cmd *cobra.Command, _ []string) error {
 		return err
 	}
 
+	pterm.Info.Printf("Using light model: %s\n", runtimeCtx.LightModel)
 	pterm.Info.Println("Generating commit message with the configured AI provider...")
+
 	message, err := llm.GenerateCommitMessage(cmd.Context(), runtimeCtx, diff)
 	if err != nil {
 		return err
