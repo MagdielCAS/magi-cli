@@ -42,6 +42,7 @@ Examples:
 	setupCmd.Flags().String("heavy-model", "", "Model for heavy tasks (e.g., gpt-4)")
 	setupCmd.Flags().String("fallback-model", "", "Fallback model (e.g., gpt-3.5-turbo)")
 	setupCmd.Flags().String("format", "", "Default output format (e.g., text, json, yaml)")
+	setupCmd.Flags().Bool("ci", false, "Run setup in CI mode (non-interactive, uses defaults)")
 
 	rootCmd.AddCommand(setupCmd)
 }
@@ -58,6 +59,7 @@ func validateOption(option string, validOptions []string) bool {
 func runSetup(cmd *cobra.Command, args []string) {
 	pterm.Info.Println("Starting magi setup...")
 
+	isCI, _ := cmd.Flags().GetBool("ci")
 	apiProvider, _ := cmd.Flags().GetString("api-provider")
 	baseURL, _ := cmd.Flags().GetString("base-url")
 	apiKey, _ := cmd.Flags().GetString("api-key")
@@ -66,6 +68,28 @@ func runSetup(cmd *cobra.Command, args []string) {
 	fallbackModel, _ := cmd.Flags().GetString("fallback-model")
 	format, _ := cmd.Flags().GetString("format")
 	var err error
+
+	if isCI {
+		pterm.Info.Println("Running in CI mode...")
+		if apiProvider == "" {
+			apiProvider = "openai"
+		}
+		if apiKey == "" {
+			apiKey = "ci-dummy-key"
+		}
+		if lightModel == "" {
+			lightModel = "gpt-3.5-turbo"
+		}
+		if heavyModel == "" {
+			heavyModel = "gpt-4"
+		}
+		if fallbackModel == "" {
+			fallbackModel = "gpt-3.5-turbo"
+		}
+		if format == "" {
+			format = "text"
+		}
+	}
 
 	// Select API provider
 	validProviders := []string{"openai", "custom"}
@@ -86,12 +110,17 @@ func runSetup(cmd *cobra.Command, args []string) {
 	// Get Base URL for custom provider
 	if apiProvider == "custom" {
 		if baseURL == "" {
-			baseURL, err = pterm.DefaultInteractiveTextInput.
-				WithMultiLine(false).
-				Show("Enter the base URL for the custom API")
-			if err != nil {
-				pterm.Error.Printf("Failed to get base URL: %v\n", err)
-				return
+			if isCI {
+				// Should have been provided via flag if needed, or we can set a default
+				pterm.Warning.Println("Base URL not provided in CI mode for custom provider")
+			} else {
+				baseURL, err = pterm.DefaultInteractiveTextInput.
+					WithMultiLine(false).
+					Show("Enter the base URL for the custom API")
+				if err != nil {
+					pterm.Error.Printf("Failed to get base URL: %v\n", err)
+					return
+				}
 			}
 		}
 	}
