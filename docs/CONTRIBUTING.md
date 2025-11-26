@@ -21,7 +21,7 @@ We use GitHub to host code, to track issues and feature requests, as well as acc
 
 ## Follow the Code Pattern
 
-Follow the established pattern used in commands. Here's what to include:
+Follow the established pattern used in commands, adhering to [CLI Guidelines](https://clig.dev/#guidelines). Here's what to include:
 
 **Command Structure:**
 
@@ -30,6 +30,9 @@ Follow the established pattern used in commands. Here's what to include:
 - Include comprehensive help text
 - Follow the pattern of having subcommands when appropriate
 - Implement a default behavior when no subcommand is specified
+- **Output:** Use stdout for primary output and stderr for diagnostic/error messages
+- **Configuration:** Support configuration via flags, environment variables, and config files (in that order of precedence)
+- **Interactivity:** Detect if the output is a TTY before prompting for input or using colors
 
 **Example from crypto command:**
 ```go
