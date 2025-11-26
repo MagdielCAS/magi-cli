@@ -23,7 +23,7 @@ import (
 var (
 	cfgFile string
 	// These variables are set at build time using ldflags
-	version = "v0.4.1" // <---VERSION---> Updating this version, will also create a new GitHub tag.
+	version = "v0.4.2" // <---VERSION---> Updating this version, will also create a new GitHub tag.
 	commit  = "none"
 	date    = "unknown"
 
@@ -122,8 +122,7 @@ Fish:
 
 func initConfig() {
 	setupPTermFlags()
-	setupConfigFile()
-	setupViper()
+	loadConfiguration()
 }
 
 func setupPTermFlags() {
@@ -132,45 +131,70 @@ func setupPTermFlags() {
 	rootCmd.PersistentFlags().BoolVarP(&pcli.DisableUpdateChecking, "disable-update-checks", "", false, "disables update checks")
 }
 
-func setupConfigFile() {
-	if cfgFile != "" {
-		viper.SetConfigFile(cfgFile)
-		return
-	}
+func loadConfiguration() {
+	viper.AutomaticEnv()
 
 	home, err := os.UserHomeDir()
 	cobra.CheckErr(err)
 
-	configDir := filepath.Join(home, ".magi")
-	if err := os.MkdirAll(configDir, 0755); err != nil {
+	globalConfigDir := filepath.Join(home, ".magi")
+	globalConfigPath := filepath.Join(globalConfigDir, "config.yaml")
+
+	// Ensure global config directory exists
+	if err := os.MkdirAll(globalConfigDir, 0755); err != nil {
 		pterm.Error.Printf("Error creating config directory: %v\n", err)
 		os.Exit(1)
 	}
 
-	viper.SetConfigName("config")
-	viper.SetConfigType("yaml")
-	viper.AddConfigPath(configDir)
-	viper.AddConfigPath("$HOME/.magi")
-	viper.AddConfigPath(".")
-}
-
-func setupViper() {
-	viper.AutomaticEnv()
+	// 1. Load Global Config
+	if cfgFile != "" {
+		viper.SetConfigFile(cfgFile)
+	} else {
+		viper.SetConfigFile(globalConfigPath)
+	}
 
 	if err := viper.ReadInConfig(); err != nil {
+		// If config file doesn't exist, create it (only if using default path or if it's the first run)
 		if _, ok := err.(viper.ConfigFileNotFoundError); ok {
-			if err = viper.SafeWriteConfig(); err != nil {
-				pterm.Error.Printf("Error creating config file: %v\n", err)
+			// We only create the default global config if we are not pointing to a custom file that doesn't exist
+			// Actually, the original logic created it.
+			if cfgFile == "" {
+				if err = viper.SafeWriteConfig(); err != nil {
+					pterm.Error.Printf("Error creating config file: %v\n", err)
+					os.Exit(1)
+				}
+				pterm.Success.Println("New config file created")
+			} else {
+				// Custom config file not found
+				pterm.Error.Printf("Config file not found: %s\n", cfgFile)
 				os.Exit(1)
 			}
-			pterm.Success.Println("New config file created")
 		} else {
 			pterm.Error.Printf("Error reading config file: %v\n", err)
 			os.Exit(1)
 		}
 	}
 
-	pterm.Debug.Printf("Using config file: %s\n", viper.ConfigFileUsed())
+	pterm.Debug.Printf("Using global config file: %s\n", viper.ConfigFileUsed())
+
+	// 2. Merge Local Config (.magi.yaml)
+	// Only check for local config if we are not forcing a specific config file via flag
+	if cfgFile == "" {
+		cwd, err := os.Getwd()
+		if err == nil {
+			localConfigPath := filepath.Join(cwd, ".magi.yaml")
+			if _, err := os.Stat(localConfigPath); err == nil {
+				// Set the config file to the local one so MergeInConfig uses it
+				// And subsequent WriteConfig calls (like 'magi config set') will write to it
+				viper.SetConfigFile(localConfigPath)
+				if err := viper.MergeInConfig(); err != nil {
+					pterm.Warning.Printf("Error merging local config file: %v\n", err)
+				} else {
+					pterm.Debug.Printf("Merged local config file: %s\n", localConfigPath)
+				}
+			}
+		}
+	}
 }
 
 func init() {
@@ -187,11 +211,6 @@ func init() {
 	viper.SetDefault("api.heavy_model", "gpt-4")
 	viper.SetDefault("api.fallback_model", "gpt-3.5-turbo")
 
-	// Use https://github.com/pterm/pcli to style the output of cobra.
-	pcli.SetRepo("MagdielCAS/magi-cli")
-	pcli.SetRootCmd(rootCmd)
-	pcli.Setup()
-
 	// Change global PTerm theme
 	pterm.ThemeDefault.SectionStyle = *pterm.NewStyle(pterm.FgCyan)
 
@@ -199,4 +218,9 @@ func init() {
 	rootCmd.AddCommand(pr.PRCmd())
 	rootCmd.AddCommand(cliCommit.CommitCmd())
 	rootCmd.AddCommand(config.ConfigCmd())
+
+	// Use https://github.com/pterm/pcli to style the output of cobra.
+	pcli.SetRepo("MagdielCAS/magi-cli")
+	pcli.SetRootCmd(rootCmd)
+	pcli.Setup()
 }

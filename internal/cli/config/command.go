@@ -18,6 +18,7 @@ Available subcommands:
   set     Sets a configuration value
   list    Lists all configuration values
   reset   Resets the configuration
+  init    Initialize a local configuration file
 
 Usage:
   magi config [command]
@@ -41,6 +42,9 @@ Examples:
   # Reset the configuration
   magi config reset
 
+  # Initialize a local configuration file
+  magi config init
+
 Run 'magi config [command] --help' for more information on a specific command.`,
 }
 
@@ -50,6 +54,7 @@ func ConfigCmd() *cobra.Command {
 	configCmd.AddCommand(SetCmd)
 	configCmd.AddCommand(ListCmd)
 	configCmd.AddCommand(ResetCmd)
+	configCmd.AddCommand(InitCmd)
 
 	return configCmd
 }

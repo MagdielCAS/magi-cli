@@ -38,6 +38,18 @@ cache:
   ttl: 3600
 ```
 
+### Local Configuration _(Since v0.4.2)_
+
+You can also have a local configuration file (`.magi.yaml`) in your project's root directory. This file overrides the global configuration for the specific keys defined in it. This is useful for project-specific settings, such as using a different model or API key for a specific workspace.
+
+To create a local configuration file, run:
+
+```bash
+magi config init
+```
+
+This command will create a `.magi.yaml` file in the current directory and automatically add it to your `.gitignore` file to prevent accidental commits of sensitive information.
+
 ## Configuration Options
 
 ### API Settings _(Since v0.3.0)_

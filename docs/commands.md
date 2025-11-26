@@ -26,6 +26,33 @@ It will guide you through setting up your API key and other preferences.
 magi setup
 ```
 
+### config
+
+Manage magi configuration.
+
+```bash
+magi config [command]
+```
+
+**Subcommands:**
+
+- `get`: Gets a configuration value
+- `set`: Sets a configuration value
+- `list`: Lists all configuration values
+- `reset`: Resets the configuration
+- `init`: Initialize a local configuration file _(Since v0.4.2)_
+
+**Examples:**
+
+```bash
+# Set a configuration value
+magi config set api.key your-api-key
+
+# Initialize a local configuration file
+magi config init
+```
+
+
 ### completion
 
 Generate completion script for your shell.

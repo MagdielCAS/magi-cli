@@ -112,6 +112,12 @@ For detailed documentation of all available commands:
 {{ .Name }} config [key] [value]
 ```
 
+You can also create a local configuration file for project-specific settings:
+
+```bash
+{{ .Name }} config init
+```
+
 ## Support
 
 - 📫 Report issues on [GitHub Issues](https://github.com/{{ .ProjectPath }}/issues)

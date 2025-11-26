@@ -26,3 +26,4 @@ dist/
 # binary files
 magi-cli
 magi
+.magi.yaml
