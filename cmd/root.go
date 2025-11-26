@@ -158,11 +158,11 @@ func loadConfiguration() {
 			// If the config file is not found, create it if it's the default global config path
 			// or if the user explicitly specified the default global config path.
 			if cfgFile == "" || cfgFile == globalConfigPath {
-				if err = viper.SafeWriteConfig(); err != nil {
+				if err = viper.WriteConfigAs(globalConfigPath); err != nil {
 					pterm.Error.Printf("Error creating config file: %v\n", err)
 					os.Exit(1)
 				}
-				pterm.Success.Println("New config file created at " + viper.ConfigFileUsed())
+				pterm.Success.Println("New config file created at " + globalConfigPath)
 			} else {
 				// Custom config file not found
 				pterm.Error.Printf("Config file not found: %s\n", cfgFile)
