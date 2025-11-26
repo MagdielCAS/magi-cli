@@ -112,6 +112,12 @@ magi uses a configuration file located at `$HOME/.magi/config.yaml`. You can mod
 magi config [key] [value]
 ```
 
+You can also create a local configuration file for project-specific settings:
+
+```bash
+magi config init
+```
+
 ## Support
 
 - 📫 Report issues on [GitHub Issues](https://github.com/MagdielCAS/magi-cli/issues)
