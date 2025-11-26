@@ -95,3 +95,69 @@ Whenever you add or modify a command (see `cmd/setup.go` or `cmd/config.go` for 
 4. **Golden files.** When testing AI prompt builders, store prompt templates under `testdata/` and compare outputs using `cmp.Diff`.
 5. **CI hooks.** Every PR must pass `go test ./...`, `golangci-lint run` (when enabled), and `make vet`. Document new required tooling in `README.md`.
 6. **Fixtures hygiene.** Never hardcode live API keys. Use env var placeholders (`MAGI_TEST_API_KEY`) and skip tests when prerequisites are missing.
+
+## 8. Command Pattern Agent Rules
+
+When implementing or modifying CLI commands, you **MUST** follow the repository's established pattern as defined in `docs/CONTRIBUTING.md`.
+
+### Command Structure Guidelines
+
+Every `cobra.Command` definition must include:
+
+1.  **Use**: A clear usage string (e.g., `command [args]`).
+2.  **Short**: A concise summary of what the command does.
+3.  **Long**: A detailed description that includes:
+    *   Explanation of the command's purpose and behavior.
+    *   **Available subcommands** (if applicable), listed with descriptions.
+    *   **Usage** section showing the command syntax.
+    *   **Examples** section showing common usage scenarios.
+
+### Example Pattern
+
+```go
+var cmd = &cobra.Command{
+    // Use is the one-line usage message.
+    // Recommended syntax is as follows:
+    //   [ ] identifies an optional argument. Arguments that are not enclosed in brackets are required.
+    //   ... indicates that you can specify multiple values for the previous argument.
+    //   |   indicates mutually exclusive information. You can use the argument to the left of the separator or the
+    //       argument to the right of the separator. You cannot use both arguments in a single use of the command.
+    //   { } delimits a set of mutually exclusive arguments when one of the arguments is required. If the arguments are
+    //       optional, they are enclosed in brackets ([ ]).
+    // Example: add [-F file | -D dir]... [-f format] profile
+    Use:   "my-command [arg]",
+
+    // Short is the short description shown in the 'help' output.
+    Short: "Concise summary",
+
+    // Long is the long message shown in the 'help <this-command>' output.
+    Long: `Detailed description of what the command does.
+
+Available subcommands:
+  sub1    Description of sub1
+  sub2    Description of sub2
+
+Usage:
+  magi my-command [arg]
+
+Examples:
+  # Example 1
+  magi my-command value
+
+  # Example 2
+  magi my-command --flag`,
+
+    // Run is the function called when the command is executed.
+    Run: func(cmd *cobra.Command, args []string) {
+        // Default behavior implementation
+    },
+}
+```
+
+### Checklist for New Commands
+
+- [ ] `Use` field is correct and descriptive.
+- [ ] `Short` field provides a quick summary.
+- [ ] `Long` field follows the structure: Description -> Subcommands -> Usage -> Examples.
+- [ ] Examples cover common use cases.
+- [ ] Help text is user-friendly and comprehensive.
