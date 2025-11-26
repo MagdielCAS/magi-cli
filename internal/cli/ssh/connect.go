@@ -28,40 +28,46 @@ Examples:
 
   # Select from a list of connections
   magi ssh connect`,
-		Run: func(cmd *cobra.Command, args []string) {
+		RunE: func(cmd *cobra.Command, args []string) error {
 			alias := ""
 			if len(args) > 0 {
 				alias = args[0]
 			}
-			connectToHost(alias)
+
+			if err := connectToHost(alias); err != nil {
+				pterm.Error.Println(err)
+				return err
+			}
+
+			return nil
 		},
 	}
 	return cmd
 }
 
-func connectToHost(alias string) {
+func connectToHost(alias string) error {
 	var conn SSHConnection
 	var err error
 
 	if alias == "" {
 		alias, conn, err = selectConnection()
 		if err != nil {
-			pterm.Error.Println(err)
-			return
+			return err
 		}
 	} else {
 		conn, err = getConnection(alias)
 		if err != nil {
-			pterm.Error.Println(err)
-			return
+			return err
 		}
 	}
 
 	pterm.Info.Printf("Connecting to %s (%s)...\n", alias, conn.IP)
 
 	if err := executeSSHConnection(conn); err != nil {
-		pterm.Error.Printf("Connection failed: %v\n", err)
+		return fmt.Errorf("connection failed: %w", err)
 	}
+
+	return nil
 }
 
 func selectConnection() (string, SSHConnection, error) {
