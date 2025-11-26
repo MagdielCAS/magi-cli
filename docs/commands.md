@@ -111,6 +111,13 @@ Security callout:
 
 Run an AgenticGoKit review of the local commits that differ from `origin/<branch>`, fill `.github/pull_request_template.md`, and open a GitHub pull request with the `gh` CLI. The command asks for extra context before invoking the agents, prints the generated review and template, and only creates the PR after you confirm.
 
+**Flags:** _(Since v0.4.1)_
+- `--dry-run`: Run the agents and output results to the terminal, but do not create a PR.
+- `--output-file <path>`: Write the agent results (plan and findings) to a markdown file.
+- `--no-comment`: Create the PR but do not add the agent findings as a comment.
+- `--only-create`: Create the PR with the filled template but do not add any comments (alias for `--no-comment`).
+- `--target-branch <branch>`: Specify the target branch for the Pull Request (defaults to the detected base branch).
+
 **Interactive example**
 ```bash
 # Answer prompts for extra context and confirmation before the PR is created
@@ -123,8 +130,20 @@ magi pr
 yes | magi pr
 ```
 
+**Dry Run with Output File**
+```bash
+# Generate the review and save it to a file without creating a PR
+magi pr --dry-run --output-file review.md
+```
+
+**Target Specific Branch**
+```bash
+# Create a PR targeting the 'develop' branch
+magi pr --target-branch develop
+```
+
 Security callout:
-- Sends only the diff between `HEAD` and `origin/<branch>`, AGENTS.md contents, and any optional user-provided notes to the configured AI provider.
+- Sends only the diff between `HEAD` and `origin/<branch>` (or target branch), AGENTS.md contents, and any optional user-provided notes to the configured AI provider.
 - Uses the hardened HTTP client, enforces TLS 1.2+, and never logs raw model responses that might contain secrets (redacted copies are stored when needed).
 - Shells out to `git` and `gh` with explicit argument arrays after confirming the local branch is pushed and sanitized hook output is surfaced.
 - Documents outbound data (diff + AGENTS guidelines) in the command help text so users know exactly what leaves their machine.
