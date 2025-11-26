@@ -239,11 +239,19 @@ func diffAgainstOrigin(ctx context.Context, files []string) (string, error) {
 	}
 
 	remoteRef := fmt.Sprintf("origin/%s", currentBranch)
-	if _, err := git.RunGit(ctx, "rev-parse", "--verify", remoteRef); err != nil {
-		return "", fmt.Errorf("unable to find %s. Fetch the branch from origin and try again: %w", remoteRef, err)
+	args := []string{"diff", "--cached"}
+
+	// Check if the remote branch exists
+	if _, err := git.RunGit(ctx, "rev-parse", "--verify", remoteRef); err == nil {
+		// If it exists, diff against it to include context from unpushed commits if any
+		args = append(args, remoteRef)
+	} else {
+		// If it doesn't exist, we're likely on a new local branch.
+		// Just diff against HEAD (implicit in --cached) to describe the staged changes.
+		pterm.Warning.Printf("Remote branch %s not found. Generating message based on staged changes only.\n", remoteRef)
 	}
 
-	args := []string{"diff", "--cached", remoteRef, "--"}
+	args = append(args, "--")
 	args = append(args, files...)
 
 	diff, err := git.RunGit(ctx, args...)
@@ -252,7 +260,7 @@ func diffAgainstOrigin(ctx context.Context, files []string) (string, error) {
 	}
 
 	if strings.TrimSpace(diff) == "" {
-		return "", errors.New("diff against origin is empty")
+		return "", errors.New("diff is empty")
 	}
 
 	return diff, nil
