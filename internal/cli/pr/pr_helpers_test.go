@@ -1,10 +1,8 @@
-package cmd
+package pr
 
 import (
 	"strings"
 	"testing"
-
-	"github.com/MagdielCAS/magi-cli/pkg/pr"
 )
 
 func TestSanitizeCommandOutputTruncates(t *testing.T) {
@@ -31,12 +29,12 @@ func TestSanitizeCommandOutputEmpty(t *testing.T) {
 }
 
 func TestGenerateMarkdownReport(t *testing.T) {
-	artifacts := pr.ReviewArtifacts{
-		Plan: pr.PullRequestPlan{
+	artifacts := ReviewArtifacts{
+		Plan: PullRequestPlan{
 			Title: "Test PR",
 			Body:  "Test Body",
 		},
-		Analysis: pr.AgentFindings{
+		Analysis: AgentFindings{
 			Summary:    "Test Summary",
 			CodeSmells: []string{"Smell 1"},
 		},

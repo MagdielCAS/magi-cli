@@ -2,10 +2,9 @@
  * Copyright © 2025 Magdiel Campelo <github.com/MagdielCAS/magi-cli>
  * This file is part of the magi-cli
 **/
-package cmd
+package config
 
 import (
-	"github.com/MagdielCAS/magi-cli/cmd/config"
 	"github.com/spf13/cobra"
 )
 
@@ -45,12 +44,12 @@ Examples:
 Run 'magi config [command] --help' for more information on a specific command.`,
 }
 
-func init() {
+func ConfigCmd() *cobra.Command {
 	// Add all subcommands
-	configCmd.AddCommand(config.GetCmd)
-	configCmd.AddCommand(config.SetCmd)
-	configCmd.AddCommand(config.ListCmd)
-	configCmd.AddCommand(config.ResetCmd)
+	configCmd.AddCommand(GetCmd)
+	configCmd.AddCommand(SetCmd)
+	configCmd.AddCommand(ListCmd)
+	configCmd.AddCommand(ResetCmd)
 
-	rootCmd.AddCommand(configCmd)
+	return configCmd
 }

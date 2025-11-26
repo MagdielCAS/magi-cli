@@ -2,18 +2,15 @@
  * Copyright © 2025 Magdiel Campelo <github.com/MagdielCAS/magi-cli>
  * This file is part of the magi-cli
 **/
-package cmd
+package commit
 
 import (
-	"bytes"
 	"context"
 	"errors"
 	"fmt"
-	"os"
-	"os/exec"
-	"path/filepath"
 	"strings"
 
+	"github.com/MagdielCAS/magi-cli/pkg/git"
 	"github.com/MagdielCAS/magi-cli/pkg/llm"
 	"github.com/MagdielCAS/magi-cli/pkg/shared"
 	"github.com/MagdielCAS/magi-cli/pkg/utils"
@@ -46,12 +43,12 @@ the contextual diff needed to craft the message.`,
 	RunE: runCommit,
 }
 
-func init() {
-	rootCmd.AddCommand(commitCmd)
+func CommitCmd() *cobra.Command {
+	return commitCmd
 }
 
 func runCommit(cmd *cobra.Command, _ []string) error {
-	if err := ensureGitRepo(cmd.Context()); err != nil {
+	if err := git.EnsureGitRepo(cmd.Context()); err != nil {
 		return err
 	}
 
@@ -125,21 +122,13 @@ func runCommit(cmd *cobra.Command, _ []string) error {
 	return nil
 }
 
-func ensureGitRepo(ctx context.Context) error {
-	_, err := runGit(ctx, "rev-parse", "--is-inside-work-tree")
-	if err != nil {
-		return fmt.Errorf("this command must be run inside a git repository: %w", err)
-	}
-	return nil
-}
-
 func listGitFiles(ctx context.Context, staged bool) ([]string, error) {
 	args := []string{"diff", "--name-only"}
 	if staged {
 		args = append(args, "--cached")
 	}
 
-	output, err := runGit(ctx, args...)
+	output, err := git.RunGit(ctx, args...)
 	if err != nil {
 		return nil, err
 	}
@@ -204,7 +193,7 @@ type statusEntry struct {
 }
 
 func gitStatusEntries(ctx context.Context) ([]statusEntry, error) {
-	output, err := runGit(ctx, "status", "--short", "--untracked-files")
+	output, err := git.RunGit(ctx, "status", "--short", "--untracked-files")
 	if err != nil {
 		return nil, err
 	}
@@ -237,25 +226,25 @@ func gitStatusEntries(ctx context.Context) ([]statusEntry, error) {
 
 func gitAdd(ctx context.Context, files []string) error {
 	args := append([]string{"add", "--"}, files...)
-	_, err := runGit(ctx, args...)
+	_, err := git.RunGit(ctx, args...)
 	return err
 }
 
 func diffAgainstOrigin(ctx context.Context, files []string) (string, error) {
-	currentBranch, err := currentBranchName(ctx)
+	currentBranch, err := git.CurrentBranchName(ctx)
 	if err != nil {
 		return "", err
 	}
 
 	remoteRef := fmt.Sprintf("origin/%s", currentBranch)
-	if _, err := runGit(ctx, "rev-parse", "--verify", remoteRef); err != nil {
+	if _, err := git.RunGit(ctx, "rev-parse", "--verify", remoteRef); err != nil {
 		return "", fmt.Errorf("unable to find %s. Fetch the branch from origin and try again: %w", remoteRef, err)
 	}
 
 	args := []string{"diff", "--cached", remoteRef, "--"}
 	args = append(args, files...)
 
-	diff, err := runGit(ctx, args...)
+	diff, err := git.RunGit(ctx, args...)
 	if err != nil {
 		return "", err
 	}
@@ -267,110 +256,17 @@ func diffAgainstOrigin(ctx context.Context, files []string) (string, error) {
 	return diff, nil
 }
 
-func currentBranchName(ctx context.Context) (string, error) {
-	output, err := runGit(ctx, "rev-parse", "--abbrev-ref", "HEAD")
-	if err != nil {
-		return "", fmt.Errorf("failed to determine current branch: %w", err)
-	}
-
-	branch := strings.TrimSpace(output)
-	if branch == "" {
-		return "", errors.New("current branch name is empty")
-	}
-
-	return branch, nil
-}
-
-func branchRemote(ctx context.Context, branch string) (string, error) {
-	if branch == "" {
-		return "", errors.New("branch name is required to determine its remote")
-	}
-
-	remote := ""
-	if output, err := runGit(ctx, "config", fmt.Sprintf("branch.%s.remote", branch)); err == nil {
-		remote = strings.TrimSpace(output)
-	}
-
-	if remote == "" {
-		if upstream, err := runGit(ctx, "rev-parse", "--abbrev-ref", fmt.Sprintf("%s@{u}", branch)); err == nil {
-			if parts := strings.SplitN(strings.TrimSpace(upstream), "/", 2); len(parts) == 2 {
-				remote = parts[0]
-			}
-		}
-	}
-
-	if remote == "" {
-		remote = "origin"
-	}
-
-	if err := verifyRemoteExists(ctx, remote); err != nil {
-		return "", fmt.Errorf("unable to find remote %s for branch %s: %w", remote, branch, err)
-	}
-
-	return remote, nil
-}
-
-func verifyRemoteExists(ctx context.Context, remote string) error {
-	if strings.TrimSpace(remote) == "" {
-		return errors.New("remote name cannot be empty")
-	}
-	if _, err := runGit(ctx, "remote", "get-url", remote); err != nil {
-		return err
-	}
-	return nil
-}
-
-func gitHooksDir(ctx context.Context) (string, error) {
-	output, err := runGit(ctx, "rev-parse", "--path-format=absolute", "--git-path", "hooks")
-	if err != nil {
-		return "", err
-	}
-
-	path := strings.TrimSpace(output)
-	if path == "" {
-		return "", fmt.Errorf("git did not return a hooks directory")
-	}
-
-	return filepath.Clean(path), nil
-}
-
-func hasGitHook(ctx context.Context, hookName string) (bool, string, error) {
-	hooksDir, err := gitHooksDir(ctx)
-	if err != nil {
-		return false, "", err
-	}
-
-	path := filepath.Join(hooksDir, hookName)
-	info, err := os.Stat(path)
-	if err != nil {
-		if os.IsNotExist(err) {
-			return false, path, nil
-		}
-		return false, "", err
-	}
-
-	if info.IsDir() {
-		return false, path, nil
-	}
-
-	if info.Mode().Perm()&0111 == 0 {
-		return false, path, nil
-	}
-
-	return true, path, nil
-}
-
 func gitCommit(ctx context.Context, message string) error {
-	hasHook, hookPath, hookErr := hasGitHook(ctx, "pre-commit")
+	hasHook, hookPath, hookErr := git.HasGitHook(ctx, "pre-commit")
 	if hookErr != nil {
 		pterm.Warning.Printf("Unable to determine pre-commit hooks: %v\n", hookErr)
 	} else if hasHook {
 		pterm.Warning.Printf("Detected pre-commit hook at %s. Hook output will be shown if it fails.\n", hookPath)
 	}
 
-	result, err := runGitRaw(ctx, "commit", "-m", message)
+	result, err := git.RunGitRaw(ctx, "commit", "-m", message)
 	if err != nil {
-		logGitFailure(err)
+		git.LogGitFailure(err)
 		if hasHook && hookErr == nil {
 			pterm.Warning.Println("Pre-commit hook blocked the commit. Fix the issues it reported and retry.")
 		}
@@ -383,76 +279,6 @@ func gitCommit(ctx context.Context, message string) error {
 	pterm.Success.Println("Commit recorded.")
 
 	return nil
-}
-
-func runGit(ctx context.Context, args ...string) (string, error) {
-	result, err := runGitRaw(ctx, args...)
-	if err != nil {
-		return "", err
-	}
-	return result.Stdout, nil
-}
-
-type gitExecResult struct {
-	Stdout string
-	Stderr string
-}
-
-type gitCmdError struct {
-	args   []string
-	result gitExecResult
-}
-
-func (e *gitCmdError) Error() string {
-	joined := strings.Join(e.args, " ")
-	message := strings.TrimSpace(e.result.Stderr)
-	if message == "" {
-		message = "unknown error"
-	}
-	return fmt.Sprintf("git %s failed: %s", joined, message)
-}
-
-func (e *gitCmdError) Result() gitExecResult {
-	return e.result
-}
-
-func runGitRaw(ctx context.Context, args ...string) (gitExecResult, error) {
-	cmd := exec.CommandContext(ctx, "git", args...)
-	var stdout bytes.Buffer
-	var stderr bytes.Buffer
-	cmd.Stdout = &stdout
-	cmd.Stderr = &stderr
-
-	err := cmd.Run()
-	result := gitExecResult{Stdout: stdout.String(), Stderr: stderr.String()}
-	if err != nil {
-		return result, &gitCmdError{args: args, result: result}
-	}
-
-	return result, nil
-}
-
-func logGitFailure(err error) {
-	var gitErr *gitCmdError
-	if errors.As(err, &gitErr) {
-		stdout := strings.TrimSpace(gitErr.result.Stdout)
-		stderr := strings.TrimSpace(gitErr.result.Stderr)
-		var combined []string
-		if stdout != "" {
-			combined = append(combined, stdout)
-		}
-		if stderr != "" {
-			combined = append(combined, stderr)
-		}
-		if len(combined) > 0 {
-			pterm.Error.Println(strings.Join(combined, "\n"))
-			return
-		}
-	}
-
-	if err != nil {
-		pterm.Error.Println(err.Error())
-	}
 }
 
 func normalizeCommitMessage(message string) string {

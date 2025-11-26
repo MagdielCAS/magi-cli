@@ -10,6 +10,10 @@ import (
 	"os/signal"
 	"path/filepath"
 
+	cliCommit "github.com/MagdielCAS/magi-cli/internal/cli/commit"
+	"github.com/MagdielCAS/magi-cli/internal/cli/config"
+	"github.com/MagdielCAS/magi-cli/internal/cli/pr"
+	"github.com/MagdielCAS/magi-cli/internal/cli/push"
 	"github.com/MagdielCAS/pcli"
 	"github.com/pterm/pterm"
 	"github.com/spf13/cobra"
@@ -190,8 +194,9 @@ func init() {
 
 	// Change global PTerm theme
 	pterm.ThemeDefault.SectionStyle = *pterm.NewStyle(pterm.FgCyan)
-}
 
-func GetRootCmd() *cobra.Command {
-	return rootCmd
+	rootCmd.AddCommand(push.PushCmd())
+	rootCmd.AddCommand(pr.PRCmd())
+	rootCmd.AddCommand(cliCommit.CommitCmd())
+	rootCmd.AddCommand(config.ConfigCmd())
 }

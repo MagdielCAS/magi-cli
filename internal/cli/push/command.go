@@ -1,9 +1,10 @@
-package cmd
+package push
 
 import (
 	"context"
 	"strings"
 
+	"github.com/MagdielCAS/magi-cli/pkg/git"
 	"github.com/pterm/pterm"
 	"github.com/spf13/cobra"
 )
@@ -22,27 +23,27 @@ Usage:
   magi push
 
 Security note: The command respects your git hooks and displays hook output when a push fails.`,
-	RunE: runPush,
+	RunE: RunPush,
 }
 
-func init() {
-	rootCmd.AddCommand(pushCmd)
+func PushCmd() *cobra.Command {
+	return pushCmd
 }
 
-func runPush(cmd *cobra.Command, _ []string) error {
+func RunPush(cmd *cobra.Command, _ []string) error {
 	ctx := cmd.Context()
-	if err := ensureGitRepo(ctx); err != nil {
+	if err := git.EnsureGitRepo(ctx); err != nil {
 		return err
 	}
 
-	branch, err := currentBranchName(ctx)
+	branch, err := git.CurrentBranchName(ctx)
 	if err != nil {
 		return err
 	}
 
 	hasUpstream := branchHasUpstream(ctx)
 	hookDetected := warnOnHook(ctx, "pre-push")
-	remote, err := branchRemote(ctx, branch)
+	remote, err := git.BranchRemote(ctx, branch)
 	if err != nil {
 		return err
 	}
@@ -53,8 +54,8 @@ func runPush(cmd *cobra.Command, _ []string) error {
 		pterm.Info.Printf("No upstream configured for %s; running 'git %s'.\n", branch, strings.Join(args, " "))
 	}
 
-	if _, err := runGitRaw(ctx, args...); err != nil {
-		logGitFailure(err)
+	if _, err := git.RunGitRaw(ctx, args...); err != nil {
+		git.LogGitFailure(err)
 		if hookDetected {
 			pterm.Warning.Println("A pre-push hook is configured and may have blocked the push. Review the hook output above.")
 		}
@@ -66,14 +67,14 @@ func runPush(cmd *cobra.Command, _ []string) error {
 }
 
 func branchHasUpstream(ctx context.Context) bool {
-	if _, err := runGit(ctx, "rev-parse", "--abbrev-ref", "--symbolic-full-name", "@{u}"); err != nil {
+	if _, err := git.RunGit(ctx, "rev-parse", "--abbrev-ref", "--symbolic-full-name", "@{u}"); err != nil {
 		return false
 	}
 	return true
 }
 
 func warnOnHook(ctx context.Context, hookName string) bool {
-	hasHook, hookPath, err := hasGitHook(ctx, hookName)
+	hasHook, hookPath, err := git.HasGitHook(ctx, hookName)
 	if err != nil {
 		pterm.Warning.Printf("Unable to determine %s hooks: %v\n", hookName, err)
 		return false

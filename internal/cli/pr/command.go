@@ -1,4 +1,4 @@
-package cmd
+package pr
 
 import (
 	"context"
@@ -12,7 +12,8 @@ import (
 	"github.com/pterm/pterm"
 	"github.com/spf13/cobra"
 
-	"github.com/MagdielCAS/magi-cli/pkg/pr"
+	"github.com/MagdielCAS/magi-cli/internal/cli/push"
+	"github.com/MagdielCAS/magi-cli/pkg/git"
 	"github.com/MagdielCAS/magi-cli/pkg/shared"
 )
 
@@ -57,19 +58,19 @@ Security note:
 	RunE: runPR,
 }
 
-func init() {
-	rootCmd.AddCommand(prCmd)
-
+func PRCmd() *cobra.Command {
 	prCmd.Flags().BoolVar(&prDryRun, "dry-run", false, "Run the agents and output results, but do not create a PR")
 	prCmd.Flags().StringVar(&prOutputFile, "output-file", "", "Write the agent results to a markdown file")
 	prCmd.Flags().BoolVar(&prNoComment, "no-comment", false, "Do not add the agent findings as a comment to the PR")
 	prCmd.Flags().BoolVar(&prOnlyCreate, "only-create", false, "Create the PR but do not add any comments")
 	prCmd.Flags().StringVar(&prTargetBranch, "target-branch", "", "Specify the target branch for the Pull Request")
+
+	return prCmd
 }
 
 func runPR(cmd *cobra.Command, _ []string) error {
 	ctx := cmd.Context()
-	if err := ensureGitRepo(ctx); err != nil {
+	if err := git.EnsureGitRepo(ctx); err != nil {
 		return err
 	}
 
@@ -80,7 +81,7 @@ func runPR(cmd *cobra.Command, _ []string) error {
 
 	pterm.Info.Printf("Using models - Analysis: %s | Writer: %s\n", runtimeCtx.HeavyModel, runtimeCtx.LightModel)
 
-	branch, err := currentBranchName(ctx)
+	branch, err := git.CurrentBranchName(ctx)
 	if err != nil {
 		return err
 	}
@@ -96,12 +97,12 @@ func runPR(cmd *cobra.Command, _ []string) error {
 	}
 
 	templatePath := filepath.Join(repoRoot, ".github", "pull_request_template.md")
-	templateBody, err := pr.LoadPullRequestTemplate(templatePath)
+	templateBody, err := LoadPullRequestTemplate(templatePath)
 	if err != nil {
 		return err
 	}
 
-	guidelines, err := pr.CollectAgentGuidelines(repoRoot)
+	guidelines, err := CollectAgentGuidelines(repoRoot)
 	if err != nil {
 		return err
 	}
@@ -111,8 +112,8 @@ func runPR(cmd *cobra.Command, _ []string) error {
 		return err
 	}
 
-	reviewer := pr.NewAgenticReviewer(runtimeCtx)
-	artifacts, err := reviewer.Review(ctx, pr.ReviewInput{
+	reviewer := NewAgenticReviewer(runtimeCtx)
+	artifacts, err := reviewer.Review(ctx, ReviewInput{
 		Diff:              diff,
 		Branch:            branch,
 		RemoteRef:         baseRef,
@@ -152,7 +153,7 @@ func runPR(cmd *cobra.Command, _ []string) error {
 	}
 
 	pterm.Info.Println("Ensuring the branch is pushed before creating the pull request...")
-	if err := runPush(cmd, nil); err != nil {
+	if err := push.RunPush(cmd, nil); err != nil {
 		return fmt.Errorf("failed to push branch prior to PR creation: %w", err)
 	}
 
@@ -161,7 +162,7 @@ func runPR(cmd *cobra.Command, _ []string) error {
 		return err
 	}
 
-	comment := pr.FormatFindingsComment(artifacts.Analysis)
+	comment := FormatFindingsComment(artifacts.Analysis)
 	if !prNoComment && !prOnlyCreate {
 		if err := commentOnPullRequest(ctx, comment); err != nil {
 			return err
@@ -193,7 +194,7 @@ func promptAdditionalContext() (string, error) {
 	return strings.TrimSpace(content), nil
 }
 
-func logFindings(artifacts pr.ReviewArtifacts) {
+func logFindings(artifacts ReviewArtifacts) {
 	pterm.DefaultSection.Println("Agent Findings")
 	printList("Summary", []string{artifacts.Analysis.Summary})
 	printList("Code Smells", artifacts.Analysis.CodeSmells)
@@ -228,13 +229,13 @@ func diffAgainstBaseBranch(ctx context.Context, branch, targetBranch string) (st
 
 	if targetBranch != "" {
 		baseBranch = targetBranch
-		remote, err := branchRemote(ctx, branch)
+		remote, err := git.BranchRemote(ctx, branch)
 		if err != nil {
 			return "", "", "", err
 		}
 
 		remoteRef := fmt.Sprintf("refs/remotes/%s/%s", remote, baseBranch)
-		out, err := runGit(ctx, "rev-parse", "--verify", remoteRef)
+		out, err := git.RunGit(ctx, "rev-parse", "--verify", remoteRef)
 		if err != nil {
 			return "", "", "", fmt.Errorf("unable to resolve target branch %s: %w", remoteRef, err)
 		}
@@ -246,7 +247,7 @@ func diffAgainstBaseBranch(ctx context.Context, branch, targetBranch string) (st
 		}
 	}
 
-	diff, err := runGit(ctx, "diff", fmt.Sprintf("%s..HEAD", baseRef))
+	diff, err := git.RunGit(ctx, "diff", fmt.Sprintf("%s..HEAD", baseRef))
 	if err != nil {
 		return "", "", "", err
 	}
@@ -259,7 +260,7 @@ func diffAgainstBaseBranch(ctx context.Context, branch, targetBranch string) (st
 }
 
 func resolveBaseBranch(ctx context.Context, branch string) (string, string, error) {
-	remote, err := branchRemote(ctx, branch)
+	remote, err := git.BranchRemote(ctx, branch)
 	if err != nil {
 		return "", "", err
 	}
@@ -270,7 +271,7 @@ func resolveBaseBranch(ctx context.Context, branch string) (string, string, erro
 	}
 
 	remoteRef := fmt.Sprintf("refs/remotes/%s/%s", remote, baseBranch)
-	baseRef, err := runGit(ctx, "rev-parse", "--verify", remoteRef)
+	baseRef, err := git.RunGit(ctx, "rev-parse", "--verify", remoteRef)
 	if err != nil {
 		return "", "", fmt.Errorf("unable to resolve %s: %w", remoteRef, err)
 	}
@@ -279,14 +280,14 @@ func resolveBaseBranch(ctx context.Context, branch string) (string, string, erro
 }
 
 func repoRootPath(ctx context.Context) (string, error) {
-	output, err := runGit(ctx, "rev-parse", "--show-toplevel")
+	output, err := git.RunGit(ctx, "rev-parse", "--show-toplevel")
 	if err != nil {
 		return "", fmt.Errorf("failed to determine repository root: %w", err)
 	}
 	return strings.TrimSpace(output), nil
 }
 
-func createPullRequest(ctx context.Context, branch, base string, plan pr.PullRequestPlan) (string, error) {
+func createPullRequest(ctx context.Context, branch, base string, plan PullRequestPlan) (string, error) {
 	bodyFile, err := writeTempFile("magi-pr-body-*.md", plan.Body)
 	if err != nil {
 		return "", err
@@ -402,12 +403,12 @@ func detectDefaultBaseBranch(ctx context.Context, remote string) (string, error)
 
 func remoteHeadBranch(ctx context.Context, remote string) string {
 	ref := fmt.Sprintf("refs/remotes/%s/HEAD", remote)
-	if headRef, err := runGit(ctx, "symbolic-ref", ref); err == nil {
+	if headRef, err := git.RunGit(ctx, "symbolic-ref", ref); err == nil {
 		prefix := fmt.Sprintf("refs/remotes/%s/", remote)
 		return strings.TrimPrefix(strings.TrimSpace(headRef), prefix)
 	}
 
-	output, err := runGit(ctx, "remote", "show", remote)
+	output, err := git.RunGit(ctx, "remote", "show", remote)
 	if err != nil {
 		return ""
 	}
@@ -423,7 +424,7 @@ func remoteHeadBranch(ctx context.Context, remote string) string {
 }
 
 func configDefaultBranch(ctx context.Context) string {
-	output, err := runGit(ctx, "config", "init.defaultbranch")
+	output, err := git.RunGit(ctx, "config", "init.defaultbranch")
 	if err != nil {
 		return ""
 	}
@@ -436,7 +437,7 @@ func remoteBranchExists(ctx context.Context, remote, branch string) bool {
 	}
 
 	ref := fmt.Sprintf("refs/remotes/%s/%s", remote, branch)
-	if _, err := runGit(ctx, "rev-parse", "--verify", ref); err != nil {
+	if _, err := git.RunGit(ctx, "rev-parse", "--verify", ref); err != nil {
 		return false
 	}
 	return true
@@ -455,7 +456,7 @@ func sanitizeCommandOutput(output string) string {
 	return trimmed
 }
 
-func generateMarkdownReport(artifacts pr.ReviewArtifacts) string {
+func generateMarkdownReport(artifacts ReviewArtifacts) string {
 	var sb strings.Builder
 	sb.WriteString("# Pull Request Plan\n\n")
 	sb.WriteString("## Title\n")
@@ -464,6 +465,6 @@ func generateMarkdownReport(artifacts pr.ReviewArtifacts) string {
 	sb.WriteString(artifacts.Plan.Body + "\n\n")
 	sb.WriteString("---\n\n")
 	sb.WriteString("# Agent Findings\n\n")
-	sb.WriteString(pr.FormatFindingsComment(artifacts.Analysis))
+	sb.WriteString(FormatFindingsComment(artifacts.Analysis))
 	return sb.String()
 }

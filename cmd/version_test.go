@@ -14,7 +14,6 @@ import (
 )
 
 func TestVersionCmd(t *testing.T) {
-	rootCmd := GetRootCmd()
 	buf := new(bytes.Buffer)
 
 	// Redirect pterm output to the buffer

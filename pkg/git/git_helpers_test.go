@@ -1,4 +1,4 @@
-package cmd
+package git
 
 import (
 	"context"
@@ -16,7 +16,7 @@ func TestBranchRemoteUsesConfiguredRemote(t *testing.T) {
 	runGitCmd(t, repo, "push", "-u", "origin", "main")
 
 	withGitEnv(t, repo)
-	got, err := branchRemote(context.Background(), "main")
+	got, err := BranchRemote(context.Background(), "main")
 	if err != nil {
 		t.Fatalf("branchRemote returned error: %v", err)
 	}
@@ -33,7 +33,7 @@ func TestBranchRemoteFallsBackToUpstream(t *testing.T) {
 	runGitCmd(t, repo, "config", "--unset", "branch.main.remote")
 
 	withGitEnv(t, repo)
-	got, err := branchRemote(context.Background(), "main")
+	got, err := BranchRemote(context.Background(), "main")
 	if err != nil {
 		t.Fatalf("branchRemote returned error: %v", err)
 	}
@@ -47,7 +47,7 @@ func TestBranchRemoteErrorsForMissingRemote(t *testing.T) {
 	runGitCmd(t, repo, "config", "branch.main.remote", "missing")
 
 	withGitEnv(t, repo)
-	_, err := branchRemote(context.Background(), "main")
+	_, err := BranchRemote(context.Background(), "main")
 	if err == nil || !strings.Contains(err.Error(), "missing") {
 		t.Fatalf("expected error referencing missing remote, got %v", err)
 	}
@@ -57,7 +57,7 @@ func TestGitHooksDirReturnsCleanPath(t *testing.T) {
 	repo := initTestRepo(t)
 	withGitEnv(t, repo)
 
-	path, err := gitHooksDir(context.Background())
+	path, err := GitHooksDir(context.Background())
 	if err != nil {
 		t.Fatalf("gitHooksDir returned error: %v", err)
 	}
