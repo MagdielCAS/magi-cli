@@ -154,7 +154,7 @@ func loadConfiguration() {
 	}
 
 	if err := viper.ReadInConfig(); err != nil {
-		if _, ok := err.(viper.ConfigFileNotFoundError); ok {
+		if _, ok := err.(viper.ConfigFileNotFoundError); ok || os.IsNotExist(err) {
 			// If the config file is not found, create it if it's the default global config path
 			// or if the user explicitly specified the default global config path.
 			if cfgFile == "" || cfgFile == globalConfigPath {
