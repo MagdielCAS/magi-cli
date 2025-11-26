@@ -3,8 +3,10 @@ package i18n
 import (
 	"encoding/json"
 	"fmt"
+	"net/http"
 	"os"
 	"strings"
+	"time"
 
 	"github.com/MagdielCAS/magi-cli/pkg/agent"
 	"github.com/MagdielCAS/magi-cli/pkg/git"
@@ -89,7 +91,15 @@ func runI18n(cmd *cobra.Command, args []string) error {
 		return fmt.Errorf("failed to build runtime context: %w", err)
 	}
 
-	llmService, err := llm.NewServiceBuilder(runtimeCtx).UseHeavyModel().Build()
+	// Create a custom HTTP client with a longer timeout for heavy translation tasks
+	customClient := &http.Client{
+		Timeout: 5 * time.Minute,
+	}
+
+	llmService, err := llm.NewServiceBuilder(runtimeCtx).
+		UseHeavyModel().
+		WithHTTPClient(customClient).
+		Build()
 	if err != nil {
 		return fmt.Errorf("failed to build LLM service: %w", err)
 	}
