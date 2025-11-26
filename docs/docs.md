@@ -51,6 +51,7 @@ Run 'magi [command] --help' for more information on a specific command.
 |`magi pr`|Review local commits with AI agents and open a GitHub pull request|
 |`magi push`|Push the current branch and auto-configure the upstream if needed|
 |`magi setup`|Starts an interactive setup wizard for magi|
+|`magi ssh`|Manage and connect to SSH servers|
 |`magi version`|Shows the version of magi|
 # ... commit
 `magi commit`
@@ -404,10 +405,159 @@ Examples:
 |`--api-key string`|Your OpenAI API key|
 |`--api-provider string`|API provider (e.g., openai, custom)|
 |`--base-url string`|Base URL for custom OpenAI compatible API|
+|`--ci`|Run setup in CI mode (non-interactive, uses defaults)|
 |`--fallback-model string`|Fallback model (e.g., gpt-3.5-turbo)|
 |`--format string`|Default output format (e.g., text, json, yaml)|
 |`--heavy-model string`|Model for heavy tasks (e.g., gpt-4)|
 |`--light-model string`|Model for light tasks (e.g., gpt-3.5-turbo)|
+# ... ssh
+`magi ssh`
+
+## Usage
+> Manage and connect to SSH servers
+
+magi ssh
+
+## Description
+
+```
+A comprehensive SSH connection management system.
+Allows you to add, connect, list, and remove SSH connections with ease.
+
+Available subcommands:
+  add         Add a new SSH connection
+  connect     Connect to a saved SSH server
+  list        List all saved SSH connections
+  remove      Remove a saved SSH connection
+
+Usage:
+  magi ssh [command]
+```
+## Examples
+
+```bash
+  # Add a new connection
+  magi ssh add
+
+  # Connect to a saved server
+  magi ssh connect my-server
+
+  # List all connections
+  magi ssh list
+```
+
+## Commands
+|Command|Usage|
+|-------|-----|
+|`magi ssh add`|Add a new SSH connection|
+|`magi ssh connect`|Connect to a saved SSH server|
+|`magi ssh list`|List all saved SSH connections|
+|`magi ssh remove`|Remove a saved SSH connection|
+# ... ssh add
+`magi ssh add`
+
+## Usage
+> Add a new SSH connection
+
+magi ssh add
+
+## Description
+
+```
+Interactive wizard to add a new SSH connection configuration.
+
+This command will prompt you for:
+- Connection Alias (unique name)
+- SSH Key (select existing or add new)
+- Server IP
+- Username (default: ubuntu)
+- Port (default: 22)
+
+Usage:
+  magi ssh add
+
+Examples:
+  # Start the interactive add wizard
+  magi ssh add
+```
+# ... ssh connect
+`magi ssh connect`
+
+## Usage
+> Connect to a saved SSH server
+
+magi ssh connect [alias]
+
+## Description
+
+```
+Connect to a saved SSH server using its alias.
+
+If no alias is provided, an interactive list of available connections will be shown.
+
+Usage:
+  magi ssh connect [alias]
+
+Examples:
+  # Connect using a specific alias
+  magi ssh connect prod-db
+
+  # Select from a list of connections
+  magi ssh connect
+```
+# ... ssh list
+`magi ssh list`
+
+## Usage
+> List all saved SSH connections
+
+magi ssh list
+
+## Description
+
+```
+Display a table of all saved SSH connections.
+
+The table includes:
+- Alias
+- IP Address
+- Username
+- Port
+- Key Path
+
+Usage:
+  magi ssh list
+
+Examples:
+  # List all connections
+  magi ssh list
+```
+# ... ssh remove
+`magi ssh remove`
+
+## Usage
+> Remove a saved SSH connection
+
+magi ssh remove [alias]
+
+## Description
+
+```
+Remove a saved SSH connection by its alias.
+
+If no alias is provided, an interactive list of connections will be shown to select from.
+You will be prompted for confirmation before the connection is deleted.
+
+Usage:
+  magi ssh remove [alias]
+
+Examples:
+  # Remove a specific connection
+  magi ssh remove prod-db
+
+  # Select a connection to remove
+  magi ssh remove
+```
 # ... version
 `magi version`
 
