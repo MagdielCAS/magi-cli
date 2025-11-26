@@ -48,6 +48,7 @@ Run 'magi [command] --help' for more information on a specific command.
 |`magi completion`|Generate completion script|
 |`magi config`|Manages the magi configuration|
 |`magi help`|Help about any command|
+|`magi i18n`|AI-powered i18n translation management|
 |`magi pr`|Review local commits with AI agents and open a GitHub pull request|
 |`magi push`|Push the current branch and auto-configure the upstream if needed|
 |`magi setup`|Starts an interactive setup wizard for magi|
@@ -295,6 +296,32 @@ magi help [command]
 Help provides help for any command in the application.
 Simply type magi help [path to command] for full details.
 ```
+# ... i18n
+`magi i18n`
+
+## Usage
+> AI-powered i18n translation management
+
+magi i18n
+
+## Description
+
+```
+Automates the extraction and translation of i18n keys from code changes.
+It compares the current branch with an origin branch to find new keys,
+then uses AI agents to generate translations in specified languages.
+```
+
+## Flags
+|Flag|Usage|
+|----|-----|
+|`--languages strings`|Target languages for translation (default [en,de])|
+|`--max-tokens int`|Max tokens for AI response (default 1000)|
+|`--origin string`|Origin branch to compare against (default "main")|
+|`-o, --output string`|Output file for translations (default "i18n_translations.json")|
+|`--text-format`|Use text format instead of JSON schema|
+|`--tolgee`|Generate Tolgee-compatible output files|
+|`--yes`|Auto-confirm all prompts|
 # ... pr
 `magi pr`
 
