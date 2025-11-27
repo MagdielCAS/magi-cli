@@ -176,6 +176,101 @@ Security callout:
 - Documents outbound data (diff + AGENTS guidelines) in the command help text so users know exactly what leaves their machine.
 - Respects configured timeouts for analysis and writing phases (see `magi config`).
 
+### ssh _(Since v0.4.0)_
+
+Manage and connect to SSH servers.
+
+A comprehensive SSH connection management system.
+Allows you to add, connect, list, and remove SSH connections with ease.
+
+```bash
+magi ssh [command]
+```
+
+**Subcommands:**
+
+- `add`: Add a new SSH connection
+- `connect`: Connect to a saved SSH server
+- `list`: List all saved SSH connections
+- `remove`: Remove a saved SSH connection
+
+**Examples:**
+
+```bash
+# Add a new connection
+magi ssh add
+
+# Connect to a saved server
+magi ssh connect my-server
+
+# List all connections
+magi ssh list
+
+# Remove a connection
+magi ssh remove my-server
+```
+
+### i18n _(Since v0.5.0)_
+
+AI-powered i18n translation management.
+
+Automates the extraction and translation of i18n keys from code changes.
+It compares the current branch with an origin branch to find new keys,
+then uses AI agents to generate translations in specified languages.
+
+```bash
+magi i18n [flags]
+```
+
+**Flags:**
+- `--origin <branch>`: Origin branch to compare against (default "main")
+- `--max-tokens <int>`: Max tokens for AI response (default 1000)
+- `--text-format`: Use text format instead of JSON schema
+- `--yes`: Auto-confirm all prompts
+- `--tolgee`: Generate Tolgee-compatible output files
+- `--languages <lang1,lang2>`: Target languages for translation (default "en,de")
+- `--output <file>`: Output file for translations (default "i18n_translations.json")
+
+**Examples:**
+
+```bash
+# Run i18n extraction and translation against main branch
+magi i18n
+
+# Specify target languages and output file
+magi i18n --languages en,es,fr --output translations.json
+
+# Generate Tolgee-compatible files
+magi i18n --tolgee
+```
+
+### crypto _(Since v0.5.1)_
+
+Cryptographic utilities for generating secure keys, salts, and keyfiles.
+
+```bash
+magi crypto [command]
+```
+
+**Subcommands:**
+
+- `salt`: Generate a random salt key
+- `keyfile`: Generate a MongoDB keyfile
+- `keypair`: Generate a public/private key pair
+
+**Examples:**
+
+```bash
+# Generate a 32-byte salt
+magi crypto salt
+
+# Generate a MongoDB keyfile non-interactively
+magi crypto keyfile --yes
+
+# Generate an RSA key pair
+magi crypto keypair --algorithm rsa
+```
+
 ## Additional Commands
 
 [More commands will be added as they are implemented]

@@ -62,6 +62,9 @@ magi-cli is a command-line interface tool designed to enhance programmer product
 - Project scaffolding
 - Documentation assistance
 - Code review suggestions
+- Cryptographic utilities
+- SSH connection management
+- AI-powered i18n translation
 - And more...
 
 ## Installation
