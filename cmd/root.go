@@ -12,6 +12,7 @@ import (
 
 	cliCommit "github.com/MagdielCAS/magi-cli/internal/cli/commit"
 	"github.com/MagdielCAS/magi-cli/internal/cli/config"
+	"github.com/MagdielCAS/magi-cli/internal/cli/crypto"
 	"github.com/MagdielCAS/magi-cli/internal/cli/i18n"
 	"github.com/MagdielCAS/magi-cli/internal/cli/pr"
 	"github.com/MagdielCAS/magi-cli/internal/cli/push"
@@ -218,6 +219,7 @@ func init() {
 	rootCmd.AddCommand(pr.PRCmd())
 	rootCmd.AddCommand(cliCommit.CommitCmd())
 	rootCmd.AddCommand(config.ConfigCmd())
+	rootCmd.AddCommand(crypto.CryptoCmd())
 	rootCmd.AddCommand(ssh.SSHCmd())
 	rootCmd.AddCommand(i18n.I18nCmd())
 
