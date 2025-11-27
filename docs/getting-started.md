@@ -48,6 +48,9 @@ Here are some common commands to get you started:
 # Get help
 magi-cli --help
 
+# Generate a local salt (no network calls)
+magi crypto salt --length 32
+
 # Generate code documentation
 magi-cli doc generate ./path/to/file
 

@@ -4,6 +4,7 @@ import (
 	"encoding/base64"
 	"os"
 	"path/filepath"
+	"runtime"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -31,9 +32,10 @@ func TestGenerateFileWithDirCheck(t *testing.T) {
 	info, err := os.Stat(fullPath)
 	assert.NoError(t, err)
 
-	// Verify permissions (0400)
-	// Note: On Windows permissions might work differently, but this is for Mac/Linux
-	assert.Equal(t, os.FileMode(0400), info.Mode().Perm())
+	if runtime.GOOS != "windows" {
+		// Verify permissions (0400)
+		assert.Equal(t, os.FileMode(0400), info.Mode().Perm())
+	}
 
 	// Verify content
 	content, err := os.ReadFile(fullPath)
@@ -43,6 +45,6 @@ func TestGenerateFileWithDirCheck(t *testing.T) {
 	decoded, err := base64.StdEncoding.DecodeString(string(content))
 	assert.NoError(t, err)
 
-	// Should be 1024 bytes
-	assert.Equal(t, 1024, len(decoded))
+	// Should be 768 bytes to stay under MongoDB's 1024-character limit
+	assert.Equal(t, 768, len(decoded))
 }

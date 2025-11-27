@@ -19,12 +19,14 @@ func TestSaltCmd(t *testing.T) {
 
 func TestRunGenerateSalt(t *testing.T) {
 	tests := []struct {
-		name   string
-		length int
+		name       string
+		length     int
+		expectSkip bool
 	}{
-		{"DefaultLength", 32},
-		{"CustomLength", 16},
-		{"LargeLength", 64},
+		{"DefaultLength", 32, false},
+		{"CustomLength", 16, false},
+		{"LargeLength", 64, false},
+		{"InvalidLength", -1, true},
 	}
 
 	for _, tt := range tests {
@@ -50,8 +52,13 @@ func TestRunGenerateSalt(t *testing.T) {
 
 			// Read captured output
 			var buf bytes.Buffer
-			_, _ = buf.ReadFrom(r)
-			output := buf.String()
+_, _ = buf.ReadFrom(r)
+output := buf.String()
+
+if tt.expectSkip {
+assert.Empty(t, strings.TrimSpace(output))
+return
+}
 
 			// Verify
 			lines := strings.Split(strings.TrimSpace(output), "\n")

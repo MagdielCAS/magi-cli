@@ -28,6 +28,11 @@ func init() {
 }
 
 func runGenerateSalt(cmd *cobra.Command, args []string) {
+	if saltLength <= 0 {
+		pterm.Error.Println("Salt length must be greater than zero")
+		return
+	}
+
 	key := make([]byte, saltLength)
 	_, err := rand.Read(key)
 	if err != nil {

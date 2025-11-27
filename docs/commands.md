@@ -248,6 +248,8 @@ magi i18n --tolgee
 
 Cryptographic utilities for generating secure keys, salts, and keyfiles.
 
+**Security:** These commands run locally and perform no network calls. Generated materials are stored on disk with restrictive permissions (0400 for keyfiles, 0600 for private keys, 0644 for public keys); review file ownership before use.
+
 ```bash
 magi crypto [command]
 ```
@@ -264,7 +266,7 @@ magi crypto [command]
 # Generate a 32-byte salt
 magi crypto salt
 
-# Generate a MongoDB keyfile non-interactively
+# Generate a MongoDB keyfile non-interactively (1024-character base64 output)
 magi crypto keyfile --yes
 
 # Generate an RSA key pair
