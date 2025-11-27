@@ -47,6 +47,7 @@ Run 'magi [command] --help' for more information on a specific command.
 |`magi commit`|Generate a conventional commit message with AI and create the commit|
 |`magi completion`|Generate completion script|
 |`magi config`|Manages the magi configuration|
+|`magi crypto`|Cryptographic utilities|
 |`magi help`|Help about any command|
 |`magi i18n`|AI-powered i18n translation management|
 |`magi pr`|Review local commits with AI agents and open a GitHub pull request|
@@ -282,6 +283,156 @@ Examples:
 
 Run 'magi config set --help' for more information on a specific command.
 ```
+# ... crypto
+`magi crypto`
+
+## Usage
+> Cryptographic utilities
+
+magi crypto
+
+## Description
+
+```
+Cryptographic utilities for generating secure keys, salts, and keyfiles.
+
+Available subcommands:
+  salt        Generate a random salt key
+  keyfile     Generate a MongoDB keyfile
+  keypair     Generate a public/private key pair
+
+Usage:
+  magi crypto [command]
+
+Examples:
+  # Default behavior (generates a salt)
+  magi crypto
+
+  # Generate a salt
+  magi crypto salt
+
+  # Generate a MongoDB keyfile
+  magi crypto keyfile
+
+  # Generate a key pair
+  magi crypto keypair
+
+Run 'magi crypto [command] --help' for more information on a specific command.
+```
+
+## Commands
+|Command|Usage|
+|-------|-----|
+|`magi crypto keyfile`|Generate a MongoDB keyfile|
+|`magi crypto keypair`|Generate a public/private key pair|
+|`magi crypto salt`|Generate a random salt key|
+# ... crypto keyfile
+`magi crypto keyfile`
+
+## Usage
+> Generate a MongoDB keyfile
+
+magi crypto keyfile
+
+## Description
+
+```
+Generate a MongoDB keyfile for replica set authentication.
+The keyfile contains 1024 bytes of random data, base64 encoded.
+File permissions are set to 0400 (read-only for owner) for security.
+```
+## Examples
+
+```bash
+  # Generate keyfile with default settings (prompts for confirmation)
+  magi crypto keyfile
+
+  # Generate keyfile non-interactively
+  magi crypto keyfile --yes
+
+  # Generate keyfile with custom name and path
+  magi crypto keyfile --filename my-key --path ./secrets --yes
+
+  # Interactive mode
+  magi crypto keyfile --interactive
+```
+
+## Flags
+|Flag|Usage|
+|----|-----|
+|`-f, --filename string`|Filename (default "keyfile")|
+|`-i, --interactive`|Interactive mode|
+|`-p, --path string`|Directory path (default ".")|
+|`-y, --yes`|Skip prompts|
+# ... crypto keypair
+`magi crypto keypair`
+
+## Usage
+> Generate a public/private key pair
+
+magi crypto keypair
+
+## Description
+
+```
+Generate a public/private key pair using RSA, ECDSA, or Ed25519 algorithms.
+Keys are saved in PEM format.
+Private keys are saved with 0600 permissions.
+Public keys are saved with 0644 permissions.
+```
+## Examples
+
+```bash
+  # Generate RSA key pair (default)
+  magi crypto keypair
+
+  # Generate ECDSA key pair
+  magi crypto keypair --algorithm ecdsa
+
+  # Generate Ed25519 key pair
+  magi crypto keypair --algorithm ed25519
+
+  # Generate only public key from existing private key
+  magi crypto keypair --public --private-key-path ./private.pem
+```
+
+## Flags
+|Flag|Usage|
+|----|-----|
+|`-a, --algorithm string`|Key algorithm (rsa, ecdsa, ed25519) (default "rsa")|
+|`-f, --filename string`|Key filename (no extension) (default "key")|
+|`-p, --path string`|Output directory (default ".")|
+|`--private`|Generate only private key|
+|`--private-key-path string`|Existing private key path (for public key generation)|
+|`--public`|Generate only public key|
+|`-y, --yes`|Skip prompts|
+# ... crypto salt
+`magi crypto salt`
+
+## Usage
+> Generate a random salt key
+
+magi crypto salt
+
+## Description
+
+```
+Generate a random salt key of a specified length.
+```
+## Examples
+
+```bash
+  # Generate a 32-byte salt (default)
+  magi crypto salt
+
+  # Generate a 64-byte salt
+  magi crypto salt --length 64
+```
+
+## Flags
+|Flag|Usage|
+|----|-----|
+|`-l, --length int`|Salt length (default 32)|
 # ... help
 `magi help`
 
