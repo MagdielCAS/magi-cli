@@ -91,9 +91,17 @@ func runI18n(cmd *cobra.Command, args []string) error {
 		return fmt.Errorf("failed to build runtime context: %w", err)
 	}
 
-	// Create a custom HTTP client with a longer timeout for heavy translation tasks
+	// Create a custom HTTP client with a longer timeout for heavy translation tasks while
+	// reusing the hardened transport from the shared client.
+	baseClient := shared.DefaultHTTPClient()
+	transport := baseClient.Transport
+	if t, ok := transport.(*http.Transport); ok {
+		transport = t.Clone()
+	}
+
 	customClient := &http.Client{
-		Timeout: 5 * time.Minute,
+		Timeout:   5 * time.Minute,
+		Transport: transport,
 	}
 
 	llmService, err := llm.NewServiceBuilder(runtimeCtx).
