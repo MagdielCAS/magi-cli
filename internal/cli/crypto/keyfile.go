@@ -22,7 +22,7 @@ var KeyfileCmd = &cobra.Command{
 	Use:   "keyfile",
 	Short: "Generate a MongoDB keyfile",
 	Long: `Generate a MongoDB keyfile for replica set authentication.
-The keyfile contains 1024 bytes of random data, base64 encoded.
+The keyfile contains 768 bytes of random data (1024 base64 characters), base64 encoded.
 File permissions are set to 0400 (read-only for owner) for security.`,
 	Example: `  # Generate keyfile with default settings (prompts for confirmation)
   magi crypto keyfile
@@ -90,8 +90,8 @@ func generateFileWithDirCheck(path, filename string) {
 		}
 	}
 
-	// Generate key
-	key := make([]byte, 1024)
+	// Generate key (MongoDB limits keyfiles to 1024 characters, so we use 768 raw bytes)
+	key := make([]byte, 768)
 	_, err := rand.Read(key)
 	if err != nil {
 		pterm.Error.Printf("Failed to generate key: %v\n", err)
