@@ -13,6 +13,7 @@ import (
 	cliCommit "github.com/MagdielCAS/magi-cli/internal/cli/commit"
 	"github.com/MagdielCAS/magi-cli/internal/cli/config"
 	"github.com/MagdielCAS/magi-cli/internal/cli/crypto"
+	"github.com/MagdielCAS/magi-cli/internal/cli/docker"
 	"github.com/MagdielCAS/magi-cli/internal/cli/i18n"
 	"github.com/MagdielCAS/magi-cli/internal/cli/pr"
 	"github.com/MagdielCAS/magi-cli/internal/cli/push"
@@ -222,6 +223,7 @@ func init() {
 	rootCmd.AddCommand(crypto.CryptoCmd())
 	rootCmd.AddCommand(ssh.SSHCmd())
 	rootCmd.AddCommand(i18n.I18nCmd())
+	rootCmd.AddCommand(docker.NewDockerCommand())
 
 	// Use https://github.com/pterm/pcli to style the output of cobra.
 	pcli.SetRepo("MagdielCAS/magi-cli")

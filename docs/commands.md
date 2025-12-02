@@ -244,7 +244,7 @@ magi i18n --languages en,es,fr --output translations.json
 magi i18n --tolgee
 ```
 
-### crypto _(Since v0.5.1)_
+### crypto _(Since v0.6.0)_
 
 Cryptographic utilities for generating secure keys, salts, and keyfiles.
 
@@ -273,6 +273,41 @@ magi crypto keyfile --yes
 magi crypto keypair --algorithm rsa
 ```
 
-## Additional Commands
+### docker _(Since v0.6.0)_
+
+Manage Docker resources including Dockerfiles and Docker Compose.
+
+Provides a comprehensive suite of tools for containerizing applications and orchestrating services.
+It includes automatic project type detection, Dockerfile generation, and an interactive Docker Compose setup wizard with AI capabilities.
+
+```bash
+magi docker [command]
+```
+
+**Subcommands:**
+
+- `compose`: Set up Docker Compose for the project
+
+**Examples:**
+
+```bash
+# Detect project type, generate Dockerfile, build and run
+magi docker
+
+# Set up Docker Compose interactively
+magi docker compose
+
+# Set up Docker Compose with auto-accept
+magi docker compose --yes
+```
+
+**Features:**
+
+- **Project Detection**: Automatically identifies Go, Node.js, Next.js, and Nuxt.js projects.
+- **Dockerfile Generation**: Creates optimized, multi-stage Dockerfiles based on the detected project type.
+- **Service Selection**: Interactive menu to select from 12+ pre-configured services (MongoDB, Postgres, Redis, Nginx, N8N, etc.).
+- **Custom Services**: Describe a service in natural language, and AI will generate the configuration.
+- **AI Validation**: Automatically validates and fixes generated Docker Compose and Nginx configurations using your configured AI provider.
+- **Dependency Management**: Automatically handles service dependencies (e.g., N8N requires PostgreSQL).
 
 [More commands will be added as they are implemented]
