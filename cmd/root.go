@@ -16,6 +16,7 @@ import (
 	"github.com/MagdielCAS/magi-cli/internal/cli/docker"
 	"github.com/MagdielCAS/magi-cli/internal/cli/i18n"
 	"github.com/MagdielCAS/magi-cli/internal/cli/pr"
+	"github.com/MagdielCAS/magi-cli/internal/cli/pulumi"
 	"github.com/MagdielCAS/magi-cli/internal/cli/push"
 	"github.com/MagdielCAS/magi-cli/internal/cli/ssh"
 	"github.com/MagdielCAS/pcli"
@@ -224,6 +225,7 @@ func init() {
 	rootCmd.AddCommand(ssh.SSHCmd())
 	rootCmd.AddCommand(i18n.I18nCmd())
 	rootCmd.AddCommand(docker.NewDockerCommand())
+	rootCmd.AddCommand(pulumi.NewPulumiCommand())
 
 	// Use https://github.com/pterm/pcli to style the output of cobra.
 	pcli.SetRepo("MagdielCAS/magi-cli")

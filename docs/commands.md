@@ -310,4 +310,45 @@ magi docker compose --yes
 - **AI Validation**: Automatically validates and fixes generated Docker Compose and Nginx configurations using your configured AI provider.
 - **Dependency Management**: Automatically handles service dependencies (e.g., N8N requires PostgreSQL).
 
+### pulumi _(Since v0.6.0)_
+
+Generate Pulumi infrastructure as code from architecture descriptions.
+
+This command transforms natural language descriptions and/or Mermaid architecture diagrams into complete Pulumi projects with proper AWS resource configurations.
+
+```bash
+magi pulumi [flags]
+```
+
+**Flags:**
+- `--text, -t`: Natural language description of infrastructure
+- `--mermaid, -m`: Path to Mermaid architecture diagram file
+- `--output, -o`: Output directory for generated project (default "./pulumi-infrastructure")
+- `--project, -p`: Pulumi project name (auto-generated if not provided)
+- `--region, -r`: AWS region for resources (default "us-east-1")
+- `--mcp-server`: Custom MCP server URL
+- `--use-local-mcp`: Use local MCP server instead of default
+- `--skip-validation`: Skip infrastructure validation
+- `--yes, -y`: Auto-confirm all prompts
+
+**Examples:**
+
+```bash
+# Generate from text description
+magi pulumi --text "Create a web app with RDS database and S3 storage"
+
+# Generate from Mermaid file
+magi pulumi --mermaid architecture.mmd
+
+# Interactive mode
+magi pulumi
+```
+
+**Features:**
+- **Natural Language to Infrastructure**: Describe your architecture in plain English.
+- **Mermaid Diagram Support**: Use visual diagrams to define your infrastructure.
+- **MCP Integration**: Connects to Model Context Protocol servers for real-time documentation and best practices.
+- **AWS Best Practices**: Automatically applies security and operational best practices.
+- **Production-Ready Code**: Generates complete, deployable Pulumi TypeScript projects.
+
 [More commands will be added as they are implemented]

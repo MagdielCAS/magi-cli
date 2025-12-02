@@ -45,7 +45,7 @@ var (
 func DefaultHTTPClient() *http.Client {
 	defaultHTTPClientOnce.Do(func() {
 		defaultHTTPClient = &http.Client{
-			Timeout: 30 * time.Second,
+			Timeout: 5 * time.Minute,
 			Transport: &http.Transport{
 				TLSClientConfig: &tls.Config{MinVersion: tls.VersionTLS12},
 			},
