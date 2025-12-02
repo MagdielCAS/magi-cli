@@ -48,9 +48,11 @@ Run 'magi [command] --help' for more information on a specific command.
 |`magi completion`|Generate completion script|
 |`magi config`|Manages the magi configuration|
 |`magi crypto`|Cryptographic utilities|
+|`magi docker`|Manage Docker resources|
 |`magi help`|Help about any command|
 |`magi i18n`|AI-powered i18n translation management|
 |`magi pr`|Review local commits with AI agents and open a GitHub pull request|
+|`magi pulumi`|Generate Pulumi infrastructure as code from architecture descriptions|
 |`magi push`|Push the current branch and auto-configure the upstream if needed|
 |`magi setup`|Starts an interactive setup wizard for magi|
 |`magi ssh`|Manage and connect to SSH servers|
@@ -433,6 +435,70 @@ Generate a random salt key of a specified length.
 |Flag|Usage|
 |----|-----|
 |`-l, --length int`|Salt length (default 32)|
+# ... docker
+`magi docker`
+
+## Usage
+> Manage Docker resources
+
+magi docker
+
+## Description
+
+```
+Manage Docker resources including Dockerfiles and Docker Compose.
+
+Available subcommands:
+  compose     Set up Docker Compose for the project
+
+Usage:
+  magi docker [command]
+
+Examples:
+  # Detect project type, generate Dockerfile, build and run
+  magi docker
+
+  # Set up Docker Compose
+  magi docker compose
+```
+
+## Commands
+|Command|Usage|
+|-------|-----|
+|`magi docker compose`|Set up Docker Compose for the project|
+# ... docker compose
+`magi docker compose`
+
+## Usage
+> Set up Docker Compose for the project
+
+magi docker compose [flags]
+
+## Description
+
+```
+Generates and manages a docker-compose.yml file for your project.
+
+This command analyzes your project structure, detects Dockerfiles, and helps you create a comprehensive Docker Compose configuration. It supports adding common services (databases, caches, etc.) and uses AI to validate and refine the generated configuration.
+
+Usage:
+  magi docker compose [flags]
+
+Examples:
+  # Interactive mode (default)
+  magi docker compose
+
+  # Auto-accept all prompts with defaults
+  magi docker compose --yes
+
+Security:
+  This command sends the generated configuration and any custom service descriptions to the configured LLM provider for validation and generation. Ensure no secrets are hardcoded in your service descriptions.
+```
+
+## Flags
+|Flag|Usage|
+|----|-----|
+|`-y, --yes`|Auto-accept prompts|
 # ... help
 `magi help`
 
@@ -525,6 +591,74 @@ Security note:
 |`--only-create`|Create the PR but do not add any comments|
 |`--output-file string`|Write the agent results to a markdown file|
 |`--target-branch string`|Specify the target branch for the Pull Request|
+# ... pulumi
+`magi pulumi`
+
+## Usage
+> Generate Pulumi infrastructure as code from architecture descriptions
+
+magi pulumi
+
+## Description
+
+```
+Generate production-ready Pulumi TypeScript projects for AWS infrastructure.
+
+This command transforms natural language descriptions and/or Mermaid architecture 
+diagrams into complete Pulumi projects with proper AWS resource configurations.
+
+FEATURES:
+• Natural language to infrastructure translation
+• Mermaid diagram parsing and interpretation  
+• MCP integration for real-time Pulumi documentation
+• AWS best practices and security configurations
+• Production-ready TypeScript code generation
+• Infrastructure validation and optimization
+• Project scaffolding with proper structure
+
+INPUT OPTIONS:
+• Free text description via --text flag or interactive prompt
+• Mermaid architecture file via --mermaid flag
+• Combined text + diagram for enhanced context
+
+OUTPUT:
+• Complete Pulumi TypeScript project
+• Proper project structure and dependencies
+• AWS resource configurations with best practices
+• Documentation and deployment instructions
+
+EXAMPLES:
+  # Generate from text description
+  magi pulumi --text "Create a web app with RDS database and S3 storage"
+  
+  # Generate from Mermaid file
+  magi pulumi --mermaid architecture.mmd
+  
+  # Interactive mode with custom output directory
+  magi pulumi --output ./my-infrastructure
+  
+  # Specify AWS region and project name
+  magi pulumi --region us-west-2 --project my-app-infra
+  
+  # Use local MCP server
+  magi pulumi --use-local-mcp --mcp-server http://localhost:3000
+
+The command uses MCP servers to access up-to-date Pulumi documentation and 
+AWS best practices, ensuring generated code follows current standards.
+```
+
+## Flags
+|Flag|Usage|
+|----|-----|
+|`--mcp-server string`|Custom MCP server URL|
+|`-m, --mermaid string`|Path to Mermaid architecture diagram file|
+|`-o, --output string`|Output directory for generated project (default "./pulumi-infrastructure")|
+|`-p, --project string`|Pulumi project name (auto-generated if not provided)|
+|`-r, --region string`|AWS region for resources (default "us-east-1")|
+|`--skip-validation`|Skip infrastructure validation|
+|`-t, --text string`|Natural language description of infrastructure|
+|`--use-local-mcp`|Use local MCP server instead of default|
+|`-y, --yes`|Auto-confirm all prompts|
 # ... push
 `magi push`
 
