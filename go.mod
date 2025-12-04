@@ -6,7 +6,7 @@ require (
 	github.com/MagdielCAS/pcli v0.5.1
 	github.com/openai/openai-go/v3 v3.9.0
 	github.com/pterm/pterm v0.12.82
-	github.com/spf13/cobra v1.10.1
+	github.com/spf13/cobra v1.10.2
 	github.com/spf13/viper v1.21.0
 	github.com/stretchr/testify v1.11.1
 	github.com/tiktoken-go/tokenizer v0.7.0
