@@ -1,8 +1,7 @@
 # Quick Start - Install {{ .Name }}
 
 > [!TIP]
-> {{ .Name }} is installable via [instl.sh](https://instl.sh).\
-> You just have to run the following command and you're ready to go!
+> {{ .Name }} is installable via our installation script or using Go.
 
 <!-- tabs:start -->
 
@@ -11,7 +10,7 @@
 ### Windows Command
 
 ```powershell
-{{ .InstallCommandWindows }}
+go install github.com/MagdielCAS/magi-cli@latest
 ```
 
 #### ** Linux **
@@ -19,7 +18,7 @@
 ### Linux Command
 
 ```bash
-{{ .InstallCommandLinux }}
+curl -sSL https://raw.githubusercontent.com/MagdielCAS/magi-cli/main/scripts/install.sh | bash
 ```
 
 #### ** macOS **
@@ -27,7 +26,7 @@
 ### macOS Command
 
 ```bash
-{{ .InstallCommandMacOS }}
+curl -sSL https://raw.githubusercontent.com/MagdielCAS/magi-cli/main/scripts/install.sh | bash
 ```
 
 #### ** Compile from source **

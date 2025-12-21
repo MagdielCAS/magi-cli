@@ -1,8 +1,7 @@
 # Quick Start - Install magi
 
 > [!TIP]
-> magi is installable via [instl.sh](https://instl.sh).\
-> You just have to run the following command and you're ready to go!
+> You can install magi via our installation script or using Go.
 
 <!-- tabs:start -->
 
@@ -11,7 +10,7 @@
 ### Windows Command
 
 ```powershell
-iwr instl.sh/MagdielCAS/magi-cli/windows | iex
+go install github.com/MagdielCAS/magi-cli@latest
 ```
 
 #### ** Linux **
@@ -19,7 +18,7 @@ iwr instl.sh/MagdielCAS/magi-cli/windows | iex
 ### Linux Command
 
 ```bash
-curl -sSL instl.sh/MagdielCAS/magi-cli/linux | bash
+curl -sSL https://raw.githubusercontent.com/MagdielCAS/magi-cli/main/scripts/install.sh | bash
 ```
 
 #### ** macOS **
@@ -27,7 +26,7 @@ curl -sSL instl.sh/MagdielCAS/magi-cli/linux | bash
 ### macOS Command
 
 ```bash
-curl -sSL instl.sh/MagdielCAS/magi-cli/macos | bash
+curl -sSL https://raw.githubusercontent.com/MagdielCAS/magi-cli/main/scripts/install.sh | bash
 ```
 
 #### ** Compile from source **

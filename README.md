@@ -68,17 +68,17 @@ magi-cli is a command-line interface tool designed to enhance programmer product
 
 **Windows**
 ```powershell
-iwr instl.sh/MagdielCAS/magi-cli/windows | iex
+go install github.com/MagdielCAS/magi-cli@latest
 ```
 
 **macOS**
 ```bash
-curl -sSL instl.sh/MagdielCAS/magi-cli/macos | bash
+curl -sSL https://raw.githubusercontent.com/MagdielCAS/magi-cli/main/scripts/install.sh | bash
 ```
 
 **Linux**
 ```bash
-curl -sSL instl.sh/MagdielCAS/magi-cli/linux | bash
+curl -sSL https://raw.githubusercontent.com/MagdielCAS/magi-cli/main/scripts/install.sh | bash
 ```
 
 ## Quick Start
