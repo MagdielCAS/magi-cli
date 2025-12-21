@@ -4,6 +4,9 @@ import (
 	"io"
 	"net/http"
 	"runtime"
+	"strings"
+
+	"golang.org/x/mod/semver"
 
 	"github.com/MagdielCAS/pcli"
 	"github.com/pterm/pterm"
@@ -31,8 +34,17 @@ func CheckForUpdates(rootCmd *cobra.Command) error {
 
 		tagName := gjson.Get(string(body), "tag_name").String()
 
-		if rootCmd.Version != tagName && tagName != "" {
-			format := "A new version of %s is availble (%s)!\n"
+		if !strings.HasPrefix(tagName, "v") {
+			tagName = "v" + tagName
+		}
+
+		currentVersion := rootCmd.Version
+		if !strings.HasPrefix(currentVersion, "v") {
+			currentVersion = "v" + currentVersion
+		}
+
+		if semver.Compare(tagName, currentVersion) > 0 {
+			format := "A new version of %s is available (%s)!\n"
 			format += "You can install the new version with: "
 
 			switch runtime.GOOS {

@@ -11,6 +11,7 @@ require (
 	github.com/stretchr/testify v1.11.1
 	github.com/tidwall/gjson v1.18.0
 	github.com/tiktoken-go/tokenizer v0.7.0
+	golang.org/x/mod v0.31.0
 )
 
 require (

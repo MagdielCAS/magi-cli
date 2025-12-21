@@ -4,13 +4,14 @@ set -e
 # Define colors for output
 RED='\033[0;31m'
 GREEN='\033[0;32m'
-NC='\033[0m' # No Color
+BLUE='\033[0;34m'
+NC='\033[0m'
 
 # Helper functions
-info() { echo -e "${NC}$1"; }
+info() { echo -e "${BLUE}$1${NC}"; }
 success() { echo -e "${GREEN}$1${NC}"; }
 error() { echo -e "${RED}Error: $1${NC}"; exit 1; }
-verbose() { [ "$VERBOSE" = "true" ] && echo -e "${NC}VERBOSE: $1"; }
+verbose() { [ "$VERBOSE" = "true" ] && echo -e "${BLUE}VERBOSE: $1${NC}" || true; }
 
 # Setup variables
 OWNER="MagdielCAS"
@@ -78,14 +79,25 @@ info "Fetching latest release from GitHub..."
 RELEASE_JSON=$(curl -sSL "$RELEASE_URL")
 
 if [ -z "$RELEASE_JSON" ]; then
-    error "Failed to fetch release information."
+    error "Failed to fetch release information. The response was empty."
 fi
 
-TAG_NAME=$(echo "$RELEASE_JSON" | grep '"tag_name":' | sed -E 's/.*"([^"]+)".*/\1/')
+# Check if response is valid JSON or contains 'message' field which usually indicates error
+if echo "$RELEASE_JSON" | grep -q "\"message\":"; then
+    MSG=$(echo "$RELEASE_JSON" | grep "\"message\":" | sed -E 's/.*"message": "([^"]+)".*/\1/')
+    error "GitHub API returned an error: $MSG"
+fi
+
+TAG_NAME=$(echo "$RELEASE_JSON" | grep '"tag_name":' | sed -E 's/.*"([^"]+)".*/\1/' || true)
+
+if [ -z "$TAG_NAME" ]; then
+    error "Could not find 'tag_name' in the release response."
+fi
+
 info "Found latest version: $TAG_NAME"
 
 # Parse assets
-ASSETS=$(echo "$RELEASE_JSON" | grep "browser_download_url" | sed -E 's/.*"([^"]+)".*/\1/')
+ASSETS=$(echo "$RELEASE_JSON" | grep "browser_download_url" | sed -E 's/.*"([^"]+)".*/\1/' || true)
 
 if [ -z "$ASSETS" ]; then
     error "No assets found for this release."
