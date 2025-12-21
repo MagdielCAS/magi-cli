@@ -351,4 +351,13 @@ magi pulumi
 - **AWS Best Practices**: Automatically applies security and operational best practices.
 - **Production-Ready Code**: Generates complete, deployable Pulumi TypeScript projects.
 
+### update _(Since v0.7.0)_
+
+Update magi to the latest version.
+
+```bash
+magi update
+```
+
+
 [More commands will be added as they are implemented]

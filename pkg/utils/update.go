@@ -14,36 +14,50 @@ import (
 	"github.com/tidwall/gjson"
 )
 
-func getRepoPath() string {
+func GetRepoPath() string {
 	return "MagdielCAS/magi-cli"
+}
+
+// IsUpdateAvailable checks if there is a newer version available on GitHub.
+// It returns true if an update is available, the latest tag name, and any error encountered.
+func IsUpdateAvailable(currentVersion string) (bool, string, error) {
+	resp, err := http.Get(pterm.Sprintf("https://api.github.com/repos/%s/releases/latest", GetRepoPath()))
+	if err != nil {
+		return false, "", err
+	}
+	defer resp.Body.Close()
+
+	body, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return false, "", err
+	}
+
+	tagName := gjson.Get(string(body), "tag_name").String()
+
+	if !strings.HasPrefix(tagName, "v") {
+		tagName = "v" + tagName
+	}
+
+	if !strings.HasPrefix(currentVersion, "v") {
+		currentVersion = "v" + currentVersion
+	}
+
+	if semver.Compare(tagName, currentVersion) > 0 {
+		return true, tagName, nil
+	}
+
+	return false, tagName, nil
 }
 
 // CheckForUpdates checks if a new version of your application is pushed, and notifies the user, if DisableUpdateChecking is true.
 func CheckForUpdates(rootCmd *cobra.Command) error {
 	if !pcli.DisableUpdateChecking {
-		resp, err := http.Get(pterm.Sprintf("https://api.github.com/repos/%s/releases/latest", getRepoPath()))
-		if err != nil {
-			return err
-		}
-		defer resp.Body.Close()
-
-		body, err := io.ReadAll(resp.Body)
+		available, tagName, err := IsUpdateAvailable(rootCmd.Version)
 		if err != nil {
 			return err
 		}
 
-		tagName := gjson.Get(string(body), "tag_name").String()
-
-		if !strings.HasPrefix(tagName, "v") {
-			tagName = "v" + tagName
-		}
-
-		currentVersion := rootCmd.Version
-		if !strings.HasPrefix(currentVersion, "v") {
-			currentVersion = "v" + currentVersion
-		}
-
-		if semver.Compare(tagName, currentVersion) > 0 {
+		if available {
 			format := "A new version of %s is available (%s)!\n"
 			format += "You can install the new version with: "
 
