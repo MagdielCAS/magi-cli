@@ -19,6 +19,7 @@ import (
 	"github.com/MagdielCAS/magi-cli/internal/cli/pulumi"
 	"github.com/MagdielCAS/magi-cli/internal/cli/push"
 	"github.com/MagdielCAS/magi-cli/internal/cli/ssh"
+	"github.com/MagdielCAS/magi-cli/pkg/utils"
 	"github.com/MagdielCAS/pcli"
 	"github.com/pterm/pterm"
 	"github.com/spf13/cobra"
@@ -28,7 +29,7 @@ import (
 var (
 	cfgFile string
 	// These variables are set at build time using ldflags
-	version = "v0.6.1" // <---VERSION---> Updating this version, will also create a new GitHub tag.
+	version = "v0.6.2" // <---VERSION---> Updating this version, will also create a new GitHub tag.
 	commit  = "none"
 	date    = "unknown"
 
@@ -67,11 +68,11 @@ func Execute() {
 	setupCompletionCmd()
 
 	if err := rootCmd.Execute(); err != nil {
-		pcli.CheckForUpdates()
+		utils.CheckForUpdates(rootCmd)
 		os.Exit(1)
 	}
 
-	pcli.CheckForUpdates()
+	utils.CheckForUpdates(rootCmd)
 }
 
 func setupSignalHandler() {
