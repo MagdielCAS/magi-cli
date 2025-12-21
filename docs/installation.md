@@ -1,7 +1,7 @@
 # Quick Start - Install magi
 
 > [!TIP]
-> You can install magi via our installation script or using Go.
+> magi is installable via our installation script or using Go.
 
 <!-- tabs:start -->
 
