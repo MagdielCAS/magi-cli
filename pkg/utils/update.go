@@ -37,11 +37,11 @@ func CheckForUpdates(rootCmd *cobra.Command) error {
 
 			switch runtime.GOOS {
 			case "windows":
-				format += pterm.Magenta(pterm.Sprintf(`iwr https://raw.githubusercontent.com/%s/windows | iex`, getRepoPath()))
+				format += pterm.Magenta(pterm.Sprintf(`iwr https://raw.githubusercontent.com/MagdielCAS/magi-cli/main/scripts/install.sh | iex`))
 			case "darwin":
-				format += pterm.Magenta(pterm.Sprintf(`curl -sSL https://raw.githubusercontent.com/%s/macos | bash`, getRepoPath()))
+				format += pterm.Magenta(pterm.Sprintf(`curl -sSL https://raw.githubusercontent.com/MagdielCAS/magi-cli/main/scripts/install.sh | bash`))
 			default:
-				format += pterm.Magenta(pterm.Sprintf(`curl -sSL https://raw.githubusercontent.com/%s/linux | bash`, getRepoPath()))
+				format += pterm.Magenta(pterm.Sprintf(`curl -sSL https://raw.githubusercontent.com/MagdielCAS/magi-cli/main/scripts/install.sh | bash`))
 			}
 			pterm.Info.Printfln(format, rootCmd.Name(), pterm.Magenta(tagName))
 		}
