@@ -56,6 +56,7 @@ Run 'magi [command] --help' for more information on a specific command.
 |`magi push`|Push the current branch and auto-configure the upstream if needed|
 |`magi setup`|Starts an interactive setup wizard for magi|
 |`magi ssh`|Manage and connect to SSH servers|
+|`magi update`|Update magi-cli to the latest version|
 |`magi version`|Shows the version of magi|
 # ... commit
 `magi commit`
@@ -870,6 +871,19 @@ Examples:
   # Select a connection to remove
   magi ssh remove
 ```
+# ... update
+`magi update`
+
+## Usage
+> Update magi-cli to the latest version
+
+magi update
+
+## Description
+
+```
+Update magi-cli to the latest version using the self-update script.
+```
 # ... version
 `magi version`
 
@@ -898,4 +912,4 @@ Run 'magi version --help' for more information on a specific command.
 
 
 ---
-> **Documentation automatically generated with [PTerm](https://github.com/pterm/cli-template) on 21 December 2025**
+> **Documentation automatically generated with [PTerm](https://github.com/pterm/cli-template) on 22 December 2025**
