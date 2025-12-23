@@ -12,6 +12,7 @@ require (
 	github.com/tidwall/gjson v1.18.0
 	github.com/tiktoken-go/tokenizer v0.7.0
 	golang.org/x/mod v0.31.0
+	gopkg.in/yaml.v3 v3.0.1
 )
 
 require (
@@ -47,5 +48,4 @@ require (
 	golang.org/x/sys v0.33.0 // indirect
 	golang.org/x/term v0.32.0 // indirect
 	golang.org/x/text v0.28.0 // indirect
-	gopkg.in/yaml.v3 v3.0.1 // indirect
 )

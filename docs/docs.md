@@ -52,6 +52,7 @@ Run 'magi [command] --help' for more information on a specific command.
 |`magi help`|Help about any command|
 |`magi i18n`|AI-powered i18n translation management|
 |`magi pr`|Review local commits with AI agents and open a GitHub pull request|
+|`magi project`|Manage project architecture, rules, and code generation|
 |`magi pulumi`|Generate Pulumi infrastructure as code from architecture descriptions|
 |`magi push`|Push the current branch and auto-configure the upstream if needed|
 |`magi setup`|Starts an interactive setup wizard for magi|
@@ -592,6 +593,136 @@ Security note:
 |`--only-create`|Create the PR but do not add any comments|
 |`--output-file string`|Write the agent results to a markdown file|
 |`--target-branch string`|Specify the target branch for the Pull Request|
+# ... project
+`magi project`
+
+## Usage
+> Manage project architecture, rules, and code generation
+
+magi project [command]
+
+## Description
+
+```
+The project command understands the code architecture using AI agents.
+It helps verify project structure, create new features, and manage architectural rules.
+
+Available subcommands:
+  init    Initialize project rules and configuration
+  create  Create new features/components
+  check   Check compliance with project rules
+  update  Update existing structures
+  redo    Re-analyze project structure
+
+Usage:
+  magi project [command]
+
+Examples:
+  magi project init
+  magi project create slice --name my-feature
+  magi project check
+```
+
+## Commands
+|Command|Usage|
+|-------|-----|
+|`magi project check`|Check compliance with project rules|
+|`magi project exec`|Execute a defined action|
+|`magi project init`|Initialize project rules and configuration|
+|`magi project list`|List available actions|
+|`magi project redo`|Re-analyze project structure|
+|`magi project update`|Update existing file using AI|
+# ... project check
+`magi project check`
+
+## Usage
+> Check compliance with project rules
+
+magi project check
+
+## Description
+
+```
+Verifies if the current project structure complies with the rules defined in AGENTS.md.
+```
+# ... project exec
+`magi project exec`
+
+## Usage
+> Execute a defined action
+
+magi project exec [action]
+
+## Description
+
+```
+Executes a project action (e.g., create a slice, add a feature) defined in .magi.yaml.
+```
+# ... project init
+`magi project init`
+
+## Usage
+> Initialize project rules and configuration
+
+magi project init
+
+## Description
+
+```
+Analyzes the current project structure and creates/updates the .magi.yaml configuration
+and AGENTS.md rules file. Uses AI to detect architecture and suggest actions.
+```
+
+## Flags
+|Flag|Usage|
+|----|-----|
+|`--force-rules`|Force creation/overwrite of AGENTS.md rules file|
+# ... project list
+`magi project list`
+
+## Usage
+> List available actions
+
+magi project list
+
+## Description
+
+```
+Lists all actions defined in .magi.yaml along with their descriptions and parameters.
+```
+# ... project redo
+`magi project redo`
+
+## Usage
+> Re-analyze project structure
+
+magi project redo
+
+## Description
+
+```
+Re-runs the project analysis to identify new structures or actions.
+Updates .magi.yaml with findings.
+```
+
+## Flags
+|Flag|Usage|
+|----|-----|
+|`--force-rules`|Force creation/overwrite of AGENTS.md rules file|
+# ... project update
+`magi project update`
+
+## Usage
+> Update existing file using AI
+
+magi project update [file]
+
+## Description
+
+```
+Updates a specific file based on natural language instructions using AI.
+Requires the file path as an argument.
+```
 # ... pulumi
 `magi pulumi`
 
