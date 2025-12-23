@@ -16,6 +16,7 @@ import (
 	"github.com/MagdielCAS/magi-cli/internal/cli/docker"
 	"github.com/MagdielCAS/magi-cli/internal/cli/i18n"
 	"github.com/MagdielCAS/magi-cli/internal/cli/pr"
+	"github.com/MagdielCAS/magi-cli/internal/cli/project"
 	"github.com/MagdielCAS/magi-cli/internal/cli/pulumi"
 	"github.com/MagdielCAS/magi-cli/internal/cli/push"
 	"github.com/MagdielCAS/magi-cli/internal/cli/ssh"
@@ -30,7 +31,7 @@ import (
 var (
 	cfgFile string
 	// These variables are set at build time using ldflags
-	version = "v0.7.0" // <---VERSION---> Updating this version, will also create a new GitHub tag.
+	version = "v0.8.0" // <---VERSION---> Updating this version, will also create a new GitHub tag.
 	commit  = "none"
 	date    = "unknown"
 
@@ -228,6 +229,7 @@ func init() {
 	rootCmd.AddCommand(i18n.I18nCmd())
 	rootCmd.AddCommand(docker.NewDockerCommand())
 	rootCmd.AddCommand(pulumi.NewPulumiCommand())
+	rootCmd.AddCommand(project.NewProjectCmd())
 	rootCmd.AddCommand(update.UpdateCmd())
 
 	// Use https://github.com/pterm/pcli to style the output of cobra.
