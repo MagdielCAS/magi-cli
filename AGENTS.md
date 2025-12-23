@@ -98,7 +98,7 @@ Whenever you add or modify a command (see `cmd/setup.go` or `cmd/config.go` for 
 
 ## 8. Command Pattern Agent Rules
 
-When implementing or modifying CLI commands, you **MUST** follow the repository's established pattern as defined in `docs/CONTRIBUTING.md`.
+When implementing or modifying CLI commands, you **MUST** follow the repository's established pattern as defined in `docs/CONTRIBUTING.md` and the strict rules below.
 
 ### Command Structure Guidelines
 
@@ -161,3 +161,52 @@ Examples:
 - [ ] `Long` field follows the structure: Description -> Subcommands -> Usage -> Examples.
 - [ ] Examples cover common use cases.
 - [ ] Help text is user-friendly and comprehensive.
+
+## 9. Strict Command Implementation Logic
+
+This section defines the **mandatory** architecture and coding standards for adding new commands. These rules are absolute to maintain codebase consistency.
+
+### 9.1 File Placement & Structure
+
+*   **Implementation Location**: CONSTANTLY place the core command logic in `internal/cli/<package_name>`.
+    *   **Do not** place complex logic directly in `cmd/`. The `cmd/` directory is **ONLY** for wiring commands to the root.
+*   **Entry Point**: The main entry point for a package must be named `command.go` (e.g., `internal/cli/config/command.go`).
+    *   This file should define the `cobra.Command` struct and a public factory function (e.g., `func ConfigCmd() *cobra.Command`).
+*   **Subcommands**: Break down subcommands into separate files (e.g., `set.go`, `get.go`, `list.go`) within the same package.
+*   **Testing**: Evey implementation file **MUST** have a corresponding `_test.go` file (e.g., `set.go` -> `set_test.go`).
+
+### 9.2 Coding Standards
+
+*   **Output**:
+    *   **STRICTLY USE** `github.com/pterm/pterm` for **ALL** user-facing output.
+    *   **FORBIDDEN**: `fmt.Println`, `fmt.Printf`, `log.Println`, `log.Printf` (except in very deep internal debug logging not intended for users, but `pterm.Debug` is preferred).
+    *   Use `pterm.Success`, `pterm.Info`, `pterm.Warning`, `pterm.Error` to strictly semplify the output type.
+*   **Configuration**:
+    *   **STRICTLY USE** `github.com/spf13/viper` for all configuration retrieval.
+    *   **FORBIDDEN**: `os.Getenv` for application config. All config must be validatable and mockable via Viper.
+*   **Error Handling**:
+    *   Use `RunE` instead of `Run` in `cobra.Command`.
+    *   Return errors to the caller. Do not `os.Exit()` inside a command handler (except for the root `Execute` function).
+    *   Use `fmt.Errorf("context: %w", err)` to wrap errors.
+*   **Interactivity**:
+    *   Check `utils.IsInteractive()` (or equivalent) before prompting.
+    *   Use `pterm.InteractiveSelectPrinter` or `pterm.InteractiveConfirmPrinter` for prompts.
+
+### 9.3 Forbidden Patterns
+
+*   ❌ **No Logic in Root**: Do not put business logic in `cmd/root.go` or `cmd/<command>.go`. Only `AddCommand` calls belong there.
+*   ❌ **No Global State**: Avoid global variables for command state. Pass dependencies via structs or contexts.
+*   ❌ **No Hardcoded Secrets**: Never commit secrets. Use Viper to load keys/tokens.
+*   ❌ **No Unstructured Output**: Don't just dump text. Use PTerm to ensure consistent styling (colors, spacing, icons).
+
+### 9.4 Example Internal Structure
+
+```text
+internal/cli/
+└── myfeature/
+    ├── command.go      # Defines MyFeatureCmd
+    ├── run.go          # The actual execution logic
+    ├── run_test.go     # Tests for execution logic
+    ├── flags.go        # Flag definitions (optional, if complex)
+    └── models.go       # Local data structures
+```
