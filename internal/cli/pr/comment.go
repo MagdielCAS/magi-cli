@@ -1,12 +1,14 @@
 package pr
 
 import (
+	"fmt"
 	"strings"
 )
 
 // FormatFindingsComment produces a markdown comment from analysis findings.
-func FormatFindingsComment(findings AgentFindings) string {
+func FormatFindingsComment(artifacts ReviewArtifacts) string {
 	var b strings.Builder
+	findings := artifacts.Analysis
 
 	b.WriteString("## 🤖 Agent Review Summary\n\n")
 	if strings.TrimSpace(findings.Summary) != "" {
@@ -22,6 +24,15 @@ func FormatFindingsComment(findings AgentFindings) string {
 	writeSection(&b, "Suggested Tests", findings.TestRecommendations)
 	writeSection(&b, "Documentation Updates", findings.DocumentationUpdates)
 	writeSection(&b, "Risk Callouts", findings.RiskCallouts)
+
+	if artifacts.I18nFindings != nil && len(artifacts.I18nFindings.Translations) > 0 {
+		b.WriteString("### I18n Recommendations\n")
+		b.WriteString("| Key | English | German |\n|---|---|---|\n")
+		for _, item := range artifacts.I18nFindings.Translations {
+			b.WriteString(fmt.Sprintf("| `%s` | %s | %s |\n", item.Key, item.ValueEn, item.ValueDe))
+		}
+		b.WriteString("\n")
+	}
 
 	return strings.TrimSpace(b.String())
 }

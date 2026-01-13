@@ -12,6 +12,7 @@ import (
 )
 
 // AgentFindings captures the structured response from the analysis agent.
+// AgentFindings captures the structured response from the analysis agent.
 type AgentFindings struct {
 	Summary               string   `json:"summary"`
 	CodeSmells            []string `json:"code_smells"`
@@ -20,6 +21,8 @@ type AgentFindings struct {
 	TestRecommendations   []string `json:"test_recommendations"`
 	DocumentationUpdates  []string `json:"documentation_updates"`
 	RiskCallouts          []string `json:"risk_callouts"`
+	NeedsI18n             bool     `json:"needs_i18n"`
+	I18nReason            string   `json:"i18n_reason"`
 }
 
 // PullRequestPlan stores the generated title and filled template.
@@ -28,10 +31,21 @@ type PullRequestPlan struct {
 	Body  string `json:"body"`
 }
 
+type TranslationItem struct {
+	Key     string `json:"key"`
+	ValueEn string `json:"value_en"`
+	ValueDe string `json:"value_de"`
+}
+
+type I18nResult struct {
+	Translations []TranslationItem `json:"translations"`
+}
+
 // ReviewArtifacts groups the analysis findings with the final PR plan.
 type ReviewArtifacts struct {
-	Analysis AgentFindings
-	Plan     PullRequestPlan
+	Analysis     AgentFindings
+	Plan         PullRequestPlan
+	I18nFindings *I18nResult
 }
 
 // AgenticReviewer orchestrates the agent workflow for PR prep.
@@ -60,6 +74,7 @@ func (r *AgenticReviewer) Review(ctx context.Context, input ReviewInput) (*Revie
 	am := agent.NewAgentPool()
 	am.WithAgent(NewAnalysisAgent(r.runtime))
 	am.WithAgent(NewWriterAgent(r.runtime))
+	am.WithAgent(NewI18nAgent(r.runtime))
 
 	// Prepare initial input
 	initialInput := map[string]string{
@@ -85,6 +100,19 @@ func (r *AgenticReviewer) Review(ctx context.Context, input ReviewInput) (*Revie
 	writerOutput := sanitizeLLMJSON(results["WriterAgent"])
 	if err := json.Unmarshal([]byte(writerOutput), &artifacts.Plan); err != nil {
 		return nil, fmt.Errorf("PR writer agent produced invalid JSON: %w (raw: %s)", err, sanitizeForError(results["WriterAgent"]))
+	}
+
+	if artifacts.Analysis.NeedsI18n {
+		i18nOutput := sanitizeLLMJSON(results["I18nAgent"])
+		if i18nOutput != "" {
+			var i18nRes I18nResult
+			if err := json.Unmarshal([]byte(i18nOutput), &i18nRes); err != nil {
+				// We don't fail the whole PR creation if i18n fails, just log it?
+				// Or maybe we should warn. For now let's treat it similarly being strict.
+				return nil, fmt.Errorf("i18n agent produced invalid JSON: %w (raw: %s)", err, sanitizeForError(results["I18nAgent"]))
+			}
+			artifacts.I18nFindings = &i18nRes
+		}
 	}
 
 	if strings.TrimSpace(artifacts.Plan.Title) == "" {

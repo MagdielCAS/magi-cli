@@ -26,6 +26,8 @@ var (
 						"test_recommendations":    map[string]interface{}{"type": "array", "items": map[string]interface{}{"type": "string"}},
 						"documentation_updates":   map[string]interface{}{"type": "array", "items": map[string]interface{}{"type": "string"}},
 						"risk_callouts":           map[string]interface{}{"type": "array", "items": map[string]interface{}{"type": "string"}},
+						"needs_i18n":              map[string]interface{}{"type": "boolean"},
+						"i18n_reason":             map[string]interface{}{"type": "string"},
 					},
 					"required": []string{
 						"summary",
@@ -35,6 +37,8 @@ var (
 						"test_recommendations",
 						"documentation_updates",
 						"risk_callouts",
+						"needs_i18n",
+						"i18n_reason",
 					},
 					"additionalProperties": false,
 				}),
@@ -61,6 +65,36 @@ var (
 			},
 		},
 	}
+
+	I18nSchema = &openai.ChatCompletionNewParamsResponseFormatUnion{
+		OfJSONSchema: &openaiShared.ResponseFormatJSONSchemaParam{
+			JSONSchema: openaiShared.ResponseFormatJSONSchemaJSONSchemaParam{
+				Name:        "i18n_result",
+				Description: openai.String("Extracted translation keys and values"),
+				Schema: interface{}(map[string]interface{}{
+					"type": "object",
+					"properties": map[string]interface{}{
+						"translations": map[string]interface{}{
+							"type": "array",
+							"items": map[string]interface{}{
+								"type": "object",
+								"properties": map[string]interface{}{
+									"key":      map[string]interface{}{"type": "string"},
+									"value_en": map[string]interface{}{"type": "string"},
+									"value_de": map[string]interface{}{"type": "string"},
+								},
+								"required":             []string{"key", "value_en", "value_de"},
+								"additionalProperties": false,
+							},
+						},
+					},
+					"required":             []string{"translations"},
+					"additionalProperties": false,
+				}),
+				Strict: openai.Bool(true),
+			},
+		},
+	}
 )
 
 const (
@@ -69,6 +103,7 @@ Goals:
 1. Identify concrete code smells or correctness risks grounded in the diff.
 2. Highlight violations of AGENTS.md policies and security red flags.
 3. Recommend regression tests or documentation updates when gaps exist.
+4. Detect if the changes introduce new user-facing strings that require internationalization.
 
 Provide analysis in JSON format:
 {
@@ -78,7 +113,9 @@ Provide analysis in JSON format:
   "agents_guideline_alerts": ["..."],
   "test_recommendations": ["..."],
   "documentation_updates": ["..."],
-  "risk_callouts": ["..."]
+  "risk_callouts": ["..."],
+  "needs_i18n": <true/false>,
+  "i18n_reason": "<brief explanation if true, else empty string>"
 }
 
 Rules:
@@ -105,6 +142,29 @@ Rules:
 - Mention which data, if any, leaves the machine and which safeguards are in place.
 - Make sure the JSON is valid.
 - Never add backticks or extra formatting outside of the template structure.`
+
+	i18nSystemPrompt = `You are "magi-i18n-expert", a localization specialist.
+Your task is to analyze the provided git diff and identifying new user-facing strings that need translation.
+For each string, suggest a hierarchical key (e.g., "module.submodule.action.message") and provide the English value and a German translation.
+
+Provide response in JSON format:
+{
+  "translations": [
+    {
+      "key": "auth.login.success",
+      "value_en": "Login successful",
+      "value_de": "Anmeldung erfolgreich"
+    }
+  ]
+}
+
+Rules:
+- Only start if "needs_i18n" was flagged as true in the analysis.
+- Focus on hardcoded strings in code or new English entries in translation files.
+- Return an empty array if no clear user-facing strings are found.
+- Do not translate log messages or internal errors unless they are shown to the end user.
+- Make sure the JSON is valid.
+- Never add backticks or extra formatting outside of the JSON structure.`
 )
 
 var (

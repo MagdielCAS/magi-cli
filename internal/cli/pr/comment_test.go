@@ -16,7 +16,16 @@ func TestFormatFindingsComment(t *testing.T) {
 		RiskCallouts:          []string{"High risk if gh CLI missing"},
 	}
 
-	comment := FormatFindingsComment(findings)
+	artifacts := ReviewArtifacts{
+		Analysis: findings,
+		I18nFindings: &I18nResult{
+			Translations: []TranslationItem{
+				{Key: "hello.world", ValueEn: "Hello World", ValueDe: "Hallo Welt"},
+			},
+		},
+	}
+
+	comment := FormatFindingsComment(artifacts)
 	required := []string{
 		"Agent Review Summary",
 		findings.Summary,
@@ -24,6 +33,8 @@ func TestFormatFindingsComment(t *testing.T) {
 		findings.AgentsGuidelineAlerts[0],
 		findings.TestRecommendations[0],
 		findings.RiskCallouts[0],
+		"I18n Recommendations",
+		"| `hello.world` | Hello World | Hallo Welt |",
 	}
 
 	for _, needle := range required {

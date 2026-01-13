@@ -2,6 +2,7 @@ package pr
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"strings"
 
@@ -191,3 +192,80 @@ func stringifyVariants(variants []llm.ModelVariant) string {
 
 	return strings.Join(labels, ", ")
 }
+
+// I18nAgent automatically generates translations for new user-facing strings
+type I18nAgent struct {
+	runtime *shared.RuntimeContext
+}
+
+func NewI18nAgent(runtime *shared.RuntimeContext) *I18nAgent {
+	return &I18nAgent{runtime: runtime}
+}
+
+func (a *I18nAgent) Name() string {
+	return "I18nAgent"
+}
+
+func (a *I18nAgent) WaitForResults() []string {
+	return []string{"AnalysisAgent"}
+}
+
+func (a *I18nAgent) Execute(input map[string]string) (string, error) {
+	analysisJSON := input["AnalysisAgent"]
+	if analysisJSON == "" {
+		return "", fmt.Errorf("analysis result is missing")
+	}
+
+	// Parse partial analysis to check if i18n is needed
+	type i18nCheck struct {
+		NeedsI18n bool `json:"needs_i18n"`
+	}
+	var check i18nCheck
+	// We sanitize just in case, though sanitization usually happens outside.
+	// The agent receives raw output from previous agent.
+	cleanJSON := sanitizeLLMJSON(analysisJSON)
+	if err := json.Unmarshal([]byte(cleanJSON), &check); err != nil {
+		// If we can't parse it, we skip i18n to be safe/avoid crashing
+		return "", nil
+	}
+
+	if !check.NeedsI18n {
+		return "", nil // No i18n needed
+	}
+
+	// We need the original payload (diff)
+	payload := input["payload"]
+	if payload == "" {
+		return "", fmt.Errorf("payload (diff) is missing")
+	}
+
+	service, err := buildServiceWithFallback(a.runtime, []llm.ModelVariant{
+		llm.ModelVariantLight,
+		llm.ModelVariantHeavy,
+		llm.ModelVariantFallback,
+	})
+	if err != nil {
+		return "", fmt.Errorf("failed to build LLM service: %w", err)
+	}
+
+	req := llm.ChatCompletionRequest{
+		Messages: []llm.ChatMessage{
+			{Role: "system", Content: i18nSystemPrompt},
+			{Role: "user", Content: payload},
+		},
+		Temperature:    0.2,
+		MaxTokens:      2048,
+		ResponseFormat: I18nSchema,
+	}
+
+	// We reuse WriterTimeout as it's a generation task
+	ctx, cancel := context.WithTimeout(context.Background(), a.runtime.WriterTimeout)
+	defer cancel()
+
+	return service.ChatCompletion(ctx, req)
+}
+
+// Helper to avoid circular dependency if sanitizeLLMJSON is only in reviewer.go
+// Note: In Go, if they are in the same package (pr), they can share functions.
+// sanitizeLLMJSON is in reviewer.go, which is package pr. So this is fine.
+// verify sanitizeLLMJSON is exported or in same package. It is in same package.

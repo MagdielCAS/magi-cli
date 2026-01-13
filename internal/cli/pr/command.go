@@ -81,37 +81,47 @@ func runPR(cmd *cobra.Command, _ []string) error {
 
 	pterm.Info.Printf("Using models - Analysis: %s | Writer: %s\n", runtimeCtx.HeavyModel, runtimeCtx.LightModel)
 
+	spinnerContext, _ := pterm.DefaultSpinner.Start("Gathering repository context and diff...")
+
 	branch, err := git.CurrentBranchName(ctx)
 	if err != nil {
+		spinnerContext.Fail(fmt.Sprintf("Failed to get branch: %v", err))
 		return err
 	}
 
 	repoRoot, err := repoRootPath(ctx)
 	if err != nil {
+		spinnerContext.Fail(fmt.Sprintf("Failed to get repo root: %v", err))
 		return err
 	}
 
 	diff, baseRef, baseBranch, err := diffAgainstBaseBranch(ctx, branch, prTargetBranch)
 	if err != nil {
+		spinnerContext.Fail(fmt.Sprintf("Failed to get diff: %v", err))
 		return err
 	}
 
 	templatePath := filepath.Join(repoRoot, ".github", "pull_request_template.md")
 	templateBody, err := LoadPullRequestTemplate(templatePath)
 	if err != nil {
+		spinnerContext.Fail(fmt.Sprintf("Failed to load template: %v", err))
 		return err
 	}
 
 	guidelines, err := CollectAgentGuidelines(repoRoot)
 	if err != nil {
+		spinnerContext.Fail(fmt.Sprintf("Failed to load guidelines: %v", err))
 		return err
 	}
+	spinnerContext.Success("Repository context gathered")
 
 	additionalContext, err := promptAdditionalContext()
 	if err != nil {
 		return err
 	}
 
+	// Start spinner for AI Analysis
+	spinnerReview, _ := pterm.DefaultSpinner.Start("Running AI Agents to analyze changes...")
 	reviewer := NewAgenticReviewer(runtimeCtx)
 	artifacts, err := reviewer.Review(ctx, ReviewInput{
 		Diff:              diff,
@@ -122,8 +132,10 @@ func runPR(cmd *cobra.Command, _ []string) error {
 		Template:          templateBody,
 	})
 	if err != nil {
+		spinnerReview.Fail(fmt.Sprintf("AI Review failed: %v", err))
 		return err
 	}
+	spinnerReview.Success("AI Analysis and PR drafting complete")
 
 	logFindings(*artifacts)
 
@@ -157,19 +169,25 @@ func runPR(cmd *cobra.Command, _ []string) error {
 		return fmt.Errorf("failed to push branch prior to PR creation: %w", err)
 	}
 
+	spinnerPR, _ := pterm.DefaultSpinner.Start("Creating Pull Request on GitHub...")
 	prURL, err := createPullRequest(ctx, branch, baseBranch, artifacts.Plan)
 	if err != nil {
+		spinnerPR.Fail(fmt.Sprintf("Failed to create PR: %v", err))
 		return err
 	}
+	spinnerPR.Success("Pull request created successfully")
 
-	comment := FormatFindingsComment(artifacts.Analysis)
+	comment := FormatFindingsComment(*artifacts)
 	if !prNoComment && !prOnlyCreate {
+		spinnerComment, _ := pterm.DefaultSpinner.Start("Posting analysis findings as a comment...")
 		if err := commentOnPullRequest(ctx, comment); err != nil {
+			spinnerComment.Fail(fmt.Sprintf("Failed to post comment: %v", err))
 			return err
 		}
+		spinnerComment.Success("Analysis findings posted to PR")
 	}
 
-	pterm.Success.Printf("Pull request created: %s\n", prURL)
+	pterm.Success.Printf("PR URL: %s\n", prURL)
 	return nil
 }
 
@@ -203,6 +221,13 @@ func logFindings(artifacts ReviewArtifacts) {
 	printList("Test Recommendations", artifacts.Analysis.TestRecommendations)
 	printList("Documentation Updates", artifacts.Analysis.DocumentationUpdates)
 	printList("Risk Callouts", artifacts.Analysis.RiskCallouts)
+
+	if artifacts.I18nFindings != nil && len(artifacts.I18nFindings.Translations) > 0 {
+		pterm.DefaultSection.Println("I18n Recommendations")
+		for _, item := range artifacts.I18nFindings.Translations {
+			pterm.Println(pterm.Sprintf("  • %s: %s -> %s", pterm.Bold.Sprint(item.Key), item.ValueEn, item.ValueDe))
+		}
+	}
 
 	pterm.DefaultSection.Println("Filled Pull Request Template")
 	fmt.Println(strings.TrimSpace(artifacts.Plan.Body))
@@ -465,6 +490,6 @@ func generateMarkdownReport(artifacts ReviewArtifacts) string {
 	sb.WriteString(artifacts.Plan.Body + "\n\n")
 	sb.WriteString("---\n\n")
 	sb.WriteString("# Agent Findings\n\n")
-	sb.WriteString(FormatFindingsComment(artifacts.Analysis))
+	sb.WriteString(FormatFindingsComment(artifacts))
 	return sb.String()
 }
