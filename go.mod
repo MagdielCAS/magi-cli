@@ -4,7 +4,7 @@ go 1.25.1
 
 require (
 	github.com/MagdielCAS/pcli v0.5.1
-	github.com/openai/openai-go/v3 v3.15.0
+	github.com/openai/openai-go/v3 v3.17.0
 	github.com/pterm/pterm v0.12.82
 	github.com/spf13/cobra v1.10.2
 	github.com/spf13/viper v1.21.0
