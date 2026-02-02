@@ -123,6 +123,9 @@ func (b *ServiceBuilder) Build() (*Service, error) {
 		option.WithAPIKey(apiKey),
 		option.WithBaseURL(trimmedBaseURL),
 		option.WithHTTPClient(httpClient),
+		option.WithHeaderAdd("HTTP-Referer", "https://github.com/MagdielCAS/magi-cli"),
+		option.WithHeaderAdd("X-Title", "Magi CLI"),
+		option.WithJSONSet("provider.zdr", true),
 	)
 
 	return &Service{
@@ -191,6 +194,12 @@ func (s *Service) ChatCompletion(ctx context.Context, req ChatCompletionRequest)
 		Model:    openaiShared.ChatModel(s.model),
 		Messages: messages,
 	}
+
+	params.SetExtraFields(map[string]any{
+		"provider": map[string]any{
+			"zdr": true,
+		},
+	})
 
 	if req.MaxTokens > 0 {
 		params.MaxCompletionTokens = openai.Int(int64(req.MaxTokens))
