@@ -154,14 +154,50 @@ func runPR(cmd *cobra.Command, _ []string) error {
 		}
 	}
 
-	confirmed, err := pterm.DefaultInteractiveConfirm.WithDefaultValue(true).
-		Show("Create the pull request with the filled template above?")
-	if err != nil {
-		return fmt.Errorf("confirmation prompt failed: %w", err)
-	}
-	if !confirmed {
-		pterm.Warning.Println("Pull request creation cancelled by user.")
-		return nil
+	for {
+		action, err := pterm.DefaultInteractiveSelect.
+			WithOptions([]string{"Submit PR", "Edit Title/Body", "Cancel"}).
+			Show("What would you like to do?")
+		if err != nil {
+			return fmt.Errorf("interactive select failed: %w", err)
+		}
+
+		if action == "Cancel" {
+			pterm.Warning.Println("Pull request creation cancelled by user.")
+			return nil
+		}
+
+		if action == "Edit Title/Body" {
+			// Combine title and body for editing
+			fullContent := fmt.Sprintf("Title: %s\n\n%s", artifacts.Plan.Title, artifacts.Plan.Body)
+			edited, err := shared.OpenEditor(fullContent, ".md")
+			if err != nil {
+				pterm.Error.Printf("Failed to open editor: %v\n", err)
+				continue
+			}
+
+			// Simple parsing back (assuming Title: prefix is kept or user knows what they are doing)
+			// We'll just split by first newline to be safe-ish, or just treat first line as title.
+			parts := strings.SplitN(edited, "\n", 2)
+			if len(parts) > 0 {
+				rawTitle := strings.TrimSpace(parts[0])
+				artifacts.Plan.Title = strings.TrimPrefix(rawTitle, "Title: ")
+				artifacts.Plan.Title = strings.TrimSpace(artifacts.Plan.Title)
+			}
+			if len(parts) > 1 {
+				artifacts.Plan.Body = strings.TrimSpace(parts[1])
+			} else {
+				artifacts.Plan.Body = ""
+			}
+
+			pterm.Info.Println("Content updated. Current state:")
+			pterm.DefaultSection.Println("Updated Pull Request Template")
+			fmt.Printf("Title: %s\n\n%s\n", artifacts.Plan.Title, artifacts.Plan.Body)
+			continue
+		}
+
+		// If Submit PR
+		break
 	}
 
 	pterm.Info.Println("Ensuring the branch is pushed before creating the pull request...")
