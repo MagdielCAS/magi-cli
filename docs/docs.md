@@ -1043,4 +1043,4 @@ Run 'magi version --help' for more information on a specific command.
 
 
 ---
-> **Documentation automatically generated with [PTerm](https://github.com/pterm/cli-template) on 02 February 2026**
+> **Documentation automatically generated with [PTerm](https://github.com/pterm/cli-template) on 06 February 2026**
