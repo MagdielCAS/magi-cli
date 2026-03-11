@@ -13,25 +13,25 @@ import (
 
 // Executor handles the execution of action steps.
 type Executor struct {
-	Agent          *GeneratorAgent
-	Runtime        *shared.RuntimeContext
-	Cwd            string
-	Architecture   string
-	ProjectType    string
-	CurrentAction  Action
-	CurrentParams  map[string]string
+	Agent         *GeneratorAgent
+	Runtime       *shared.RuntimeContext
+	Cwd           string
+	Architecture  string
+	ProjectType   string
+	CurrentAction Action
+	CurrentParams map[string]string
 }
 
 // NewExecutor creates a new Executor.
 func NewExecutor(runtime *shared.RuntimeContext, cwd, arch, pType string, action Action, params map[string]string) *Executor {
 	return &Executor{
-		Agent:          NewGeneratorAgent(runtime),
-		Runtime:        runtime,
-		Cwd:            cwd,
-		Architecture:   arch,
-		ProjectType:    pType,
-		CurrentAction:  action,
-		CurrentParams:  params,
+		Agent:         NewGeneratorAgent(runtime),
+		Runtime:       runtime,
+		Cwd:           cwd,
+		Architecture:  arch,
+		ProjectType:   pType,
+		CurrentAction: action,
+		CurrentParams: params,
 	}
 }
 
@@ -98,7 +98,7 @@ func (e *Executor) handleCreateFile(step ActionStep) error {
 // handleEditFile handles editing existing files.
 func (e *Executor) handleEditFile(step ActionStep) error {
 	targetFile := e.resolveVariable(step.Parameters["target"])
-	
+
 	// If target is missing, try to resolve it via LLM or interactive prompt
 	if targetFile == "" {
 		// Use instruction to hint at the file. For now, interactive fallback.
@@ -142,7 +142,7 @@ func (e *Executor) handleRunCommand(step ActionStep) error {
 	}
 
 	pterm.Info.Printf("Command: %s\n", cmdStr)
-	
+
 	if confirm, _ := pterm.DefaultInteractiveConfirm.WithDefaultValue(false).Show("Run this command?"); !confirm {
 		pterm.Info.Println("Skipped command execution.")
 		return nil
@@ -153,7 +153,7 @@ func (e *Executor) handleRunCommand(step ActionStep) error {
 	if len(parts) == 0 {
 		return nil
 	}
-	
+
 	cmd := exec.Command(parts[0], parts[1:]...)
 	cmd.Dir = e.Cwd
 	cmd.Stdout = os.Stdout
