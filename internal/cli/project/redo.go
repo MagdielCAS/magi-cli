@@ -21,7 +21,7 @@ Updates .magi.yaml with findings.`,
 				return nil
 			}
 
-            // Reuse init logic 
+            // Reuse init logic
 			return RunAnalysisAndConfig(false, forceRules)
 		},
 	}

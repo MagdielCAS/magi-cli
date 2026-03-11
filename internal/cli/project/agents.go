@@ -119,7 +119,7 @@ func (v *ValidatorAgent) Validate(result *AnalysisResult) (*AnalysisResult, erro
     // 1. Check for invalid steps programmaticall first to save tokens
     needsFix := false
     var issues []string
-    
+
     for _, action := range result.Actions {
         for i, step := range action.Steps {
             if step.Tool == "run_command" {
@@ -130,7 +130,7 @@ func (v *ValidatorAgent) Validate(result *AnalysisResult) (*AnalysisResult, erro
             }
         }
     }
-    
+
     if !needsFix {
         return result, nil
     }
@@ -138,7 +138,7 @@ func (v *ValidatorAgent) Validate(result *AnalysisResult) (*AnalysisResult, erro
     // 2. Fix via LLM
     resultJSON, _ := json.Marshal(result)
     issuesStr := strings.Join(issues, "\n")
-    
+
     systemPrompt := `You are a Strict Configuration Validator.
 Your task is to FIX the provided Project Analysis JSON based on the reported validity issues.
 Verify that all "run_command" steps have a "command" parameter with the actual executable shell command.
@@ -343,12 +343,12 @@ func NewReviewerAgent(runtime *shared.RuntimeContext) *ReviewerAgent {
 // ReviewCompliance checks if the project structure matches the rules.
 func (r *ReviewerAgent) ReviewCompliance(rootPath string, rulesContent string) (string, error) {
    // 1. Get File Tree
-    // We reuse a similar file tree function or extract it to a helper. 
+    // We reuse a similar file tree function or extract it to a helper.
     // Since getFileTree is a method of ArchitectureAgent, let's copy or refactor.
     // For simplicity I'll duplicate the walker logic here or make it a private function in agents.go
     // assuming I can access it if I make it a function not method, or just duplicate.
     // Let's refactor getFileTree to be a standalone function "getFileTree" in this package.
-    
+
     fileTree, err := getFileTree(rootPath)
     if err != nil {
         return "", err
@@ -389,7 +389,7 @@ Format the output as a bulleted list of issues.`
 	return resp, nil
 }
 
-// Helper function to be shared. 
+// Helper function to be shared.
 // I need to change ArchitectureAgent.getFileTree to use this or be this.
 func getFileTree(root string) (string, error) {
 	var sb strings.Builder
@@ -417,4 +417,3 @@ func getFileTree(root string) (string, error) {
 	})
 	return sb.String(), err
 }
-

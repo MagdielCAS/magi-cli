@@ -30,7 +30,7 @@ func NewExecCmd() *cobra.Command {
                 pterm.Warning.Println(".magi.yaml not found. Run 'magi project init' first.")
                 return nil
             }
-            
+
             data, err := os.ReadFile(configPath)
             if err != nil {
                 return fmt.Errorf("failed to read config: %w", err)
@@ -81,7 +81,7 @@ func NewExecCmd() *cobra.Command {
                  return err
              }
              agent := NewGeneratorAgent(runtime)
-             
+
              architecture := config.Architecture
              if architecture == "" { architecture = "Go Project" }
              projectType := config.ProjectType
@@ -96,7 +96,7 @@ func NewExecCmd() *cobra.Command {
                 pterm.Success.Println("Action completed successfully!")
                 return nil
             }
-            
+
             // Fallback to legacy Plan/Geneate
             pterm.Info.Println("No steps defined. specific steps. Fallback to auto-planning...")
 
@@ -112,7 +112,7 @@ func NewExecCmd() *cobra.Command {
              for _, f := range plan.Files {
                  pterm.Println(pterm.Green("  + ") + f.Path + pterm.Gray(" ("+f.Description+")"))
              }
-             
+
              confirm, _ := pterm.DefaultInteractiveConfirm.Show("Proceed with generation?")
              if !confirm {
                  pterm.Info.Println("Aborted.")
@@ -126,15 +126,15 @@ func NewExecCmd() *cobra.Command {
                  content, err := agent.GenerateContent(cwd, architecture, projectType, *selectedAction, params, f)
                  if err != nil {
                      pterm.Error.Printf("Failed to generate %s: %v\n", f.Path, err)
-                     continue 
+                     continue
                  }
-                 
+
                  fullPath := filepath.Join(cwd, f.Path)
                  if err := os.MkdirAll(filepath.Dir(fullPath), 0755); err != nil {
                       pterm.Error.Printf("Failed to create dir for %s: %v\n", f.Path, err)
                       continue
                  }
-                 
+
                  // Check overwrite
                  if _, err := os.Stat(fullPath); err == nil {
                      // In non-interactive mode or simply proceed for now as user confirmed plan.
@@ -152,5 +152,5 @@ func NewExecCmd() *cobra.Command {
 			return nil
 		},
 	}
-    return cmd 
+    return cmd
 }

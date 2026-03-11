@@ -14,6 +14,9 @@ import (
 	"github.com/spf13/viper"
 )
 
+// aliasRegex is pre-compiled to avoid redundantly recompiling the regex on each loop iteration
+var aliasRegex = regexp.MustCompile("^[a-zA-Z0-9_-]+$")
+
 func addCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "add",
@@ -78,8 +81,6 @@ func promptForAlias() (string, error) {
 	var err error
 
 	existing := viper.GetStringMap(ConfigSSHConnections)
-
-	aliasRegex := regexp.MustCompile("^[a-zA-Z0-9_-]+$")
 
 	for {
 		alias, err = pterm.DefaultInteractiveTextInput.WithDefaultText("Connection Alias").Show()

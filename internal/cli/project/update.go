@@ -87,7 +87,7 @@ Requires the file path as an argument.`,
             // TODO: In the future, show a helper diff here? For now, we rely on user trust/git.
             pterm.Info.Printf("File: %s\n", updatedFile.Path)
             pterm.Info.Println("Content Length:", len(updatedFile.Content))
-            
+
             confirm, _ := pterm.DefaultInteractiveConfirm.Show("Apply changes?")
             if confirm {
                 if err := os.WriteFile(fullPath, []byte(updatedFile.Content), 0644); err != nil {

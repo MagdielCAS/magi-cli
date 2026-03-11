@@ -21,7 +21,7 @@ func NewCheckCmd() *cobra.Command {
 			if err != nil {
 				return fmt.Errorf("failed to get cwd: %w", err)
 			}
-			
+
 			// 1. Find Rules file
 			configPath := filepath.Join(cwd, ".magi.yaml")
 			var rulesFile string = "AGENTS.md" // Default

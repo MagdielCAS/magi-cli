@@ -64,7 +64,7 @@ func RunAnalysisAndConfig(createRules bool, forceRules bool) error {
     analysis, err = validAgent.Validate(analysis)
     if err != nil {
         spinnerVal.Warning("Validation incomplete: " + err.Error())
-        // Continue with original analysis instead of failing hard? 
+        // Continue with original analysis instead of failing hard?
         // Or fail? Let's log warning and proceed with potentially flawed analysis or original.
     } else {
         spinnerVal.Success("Validation complete!")
@@ -122,7 +122,7 @@ func RunAnalysisAndConfig(createRules bool, forceRules bool) error {
 	// 5. Create AGENTS.md if missing
 	if createRules || forceRules {
 		rulesPath := filepath.Join(cwd, config.RulesPath)
-        
+
         // Check existence
         rulesExist := false
 		if _, err := os.Stat(rulesPath); err == nil {
