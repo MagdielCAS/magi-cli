@@ -15,8 +15,8 @@ func NewCheckCmd() *cobra.Command {
 	return &cobra.Command{
 		Use:   "check",
 		Short: "Check compliance with project rules",
-		Long:  `Verifies if the current project structure complies with the rules defined in AGENTS.md.`,
-		RunE: func(cmd *cobra.Command, args []string) error {
+		Long: `Verifies if the current project structure complies with the rules defined in AGENTS.md.`,
+        RunE: func(cmd *cobra.Command, args []string) error {
 			cwd, err := os.Getwd()
 			if err != nil {
 				return fmt.Errorf("failed to get cwd: %w", err)

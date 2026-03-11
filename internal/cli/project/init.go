@@ -18,7 +18,7 @@ func NewInitCmd() *cobra.Command {
 		Long: `Analyzes the current project structure and creates/updates the .magi.yaml configuration
 and AGENTS.md rules file. Uses AI to detect architecture and suggest actions.`,
 		RunE: func(cmd *cobra.Command, args []string) error {
-			forceRules, _ := cmd.Flags().GetBool("force-rules")
+            forceRules, _ := cmd.Flags().GetBool("force-rules")
 
 			// 1. Safety Confirm
 			confirm, _ := pterm.DefaultInteractiveConfirm.Show("This will analyze your project using LLM (consuming tokens) and may create/overwrite .magi.yaml. Proceed?")
@@ -30,8 +30,8 @@ and AGENTS.md rules file. Uses AI to detect architecture and suggest actions.`,
 			return RunAnalysisAndConfig(true, forceRules)
 		},
 	}
-	cmd.Flags().Bool("force-rules", false, "Force creation/overwrite of AGENTS.md rules file")
-	return cmd
+    cmd.Flags().Bool("force-rules", false, "Force creation/overwrite of AGENTS.md rules file")
+    return cmd
 }
 
 // RunAnalysisAndConfig shared logic for init and redo.
@@ -58,17 +58,17 @@ func RunAnalysisAndConfig(createRules bool, forceRules bool) error {
 	}
 	spinner.Success("Analysis complete!")
 
-	// 2.5 Validation
-	validAgent := NewValidatorAgent(runtime)
-	spinnerVal, _ := pterm.DefaultSpinner.Start("Validating analysis results...")
-	analysis, err = validAgent.Validate(analysis)
-	if err != nil {
-		spinnerVal.Warning("Validation incomplete: " + err.Error())
-		// Continue with original analysis instead of failing hard?
-		// Or fail? Let's log warning and proceed with potentially flawed analysis or original.
-	} else {
-		spinnerVal.Success("Validation complete!")
-	}
+    // 2.5 Validation
+    validAgent := NewValidatorAgent(runtime)
+    spinnerVal, _ := pterm.DefaultSpinner.Start("Validating analysis results...")
+    analysis, err = validAgent.Validate(analysis)
+    if err != nil {
+        spinnerVal.Warning("Validation incomplete: " + err.Error())
+        // Continue with original analysis instead of failing hard?
+        // Or fail? Let's log warning and proceed with potentially flawed analysis or original.
+    } else {
+        spinnerVal.Success("Validation complete!")
+    }
 
 	// 3. Log Results
 	pterm.DefaultSection.Println("Project Analysis Result")
@@ -123,32 +123,32 @@ func RunAnalysisAndConfig(createRules bool, forceRules bool) error {
 	if createRules || forceRules {
 		rulesPath := filepath.Join(cwd, config.RulesPath)
 
-		// Check existence
-		rulesExist := false
+        // Check existence
+        rulesExist := false
 		if _, err := os.Stat(rulesPath); err == nil {
-			rulesExist = true
-		}
+            rulesExist = true
+        }
 
-		shouldCreate := false
-		if forceRules {
-			shouldCreate = true
-			if rulesExist {
-				pterm.Info.Println("Forcing recreation of AGENTS.md...")
-			}
-		} else if !rulesExist {
-			createConfirm, _ := pterm.DefaultInteractiveConfirm.Show("Create default AGENTS.md?")
-			if createConfirm {
-				shouldCreate = true
-			}
-		}
+        shouldCreate := false
+        if forceRules {
+            shouldCreate = true
+            if rulesExist {
+                pterm.Info.Println("Forcing recreation of AGENTS.md...")
+            }
+        } else if !rulesExist {
+            createConfirm, _ := pterm.DefaultInteractiveConfirm.Show("Create default AGENTS.md?")
+            if createConfirm {
+                shouldCreate = true
+            }
+        }
 
 		if shouldCreate {
-			defaultRules := fmt.Sprintf("# %s Agent Rules\n\n## Architecture: %s\n## Type: %s\n\nAdd your project-specific rules here.", filepath.Base(cwd), analysis.Architecture, analysis.ProjectType)
-			if err := os.WriteFile(rulesPath, []byte(defaultRules), 0644); err != nil {
-				pterm.Error.Println("Failed to create AGENTS.md: " + err.Error())
-			} else {
-				pterm.Success.Println("Created/Updated " + config.RulesPath)
-			}
+            defaultRules := fmt.Sprintf("# %s Agent Rules\n\n## Architecture: %s\n## Type: %s\n\nAdd your project-specific rules here.", filepath.Base(cwd), analysis.Architecture, analysis.ProjectType)
+            if err := os.WriteFile(rulesPath, []byte(defaultRules), 0644); err != nil {
+                pterm.Error.Println("Failed to create AGENTS.md: " + err.Error())
+            } else {
+                pterm.Success.Println("Created/Updated " + config.RulesPath)
+            }
 		}
 	}
 

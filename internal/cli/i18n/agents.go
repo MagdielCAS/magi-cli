@@ -26,6 +26,9 @@ type I18nKey struct {
 
 // Agent Implementations
 
+// extractPatterns are pre-compiled regular expressions for extracting i18n keys.
+// Performance note: Hoisted to a package-level variable to avoid compiling these expressions
+// redundantly on each KeyExtractor.Execute invocation.
 var extractPatterns = []*regexp.Regexp{
 	// t('key') or t("key")
 	regexp.MustCompile(`(?:^|[^a-zA-Z0-9_])t\((?:'([^']+)'|"([^"]+)")\)`),

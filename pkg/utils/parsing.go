@@ -2,6 +2,7 @@ package utils
 
 import "regexp"
 
+// codeBlockRegex is pre-compiled to optimize RemoveCodeBlock which is frequently called.
 var codeBlockRegex = regexp.MustCompile(`(\` + "`" + "`" + "`" + `[\w-]*)\n([\s\S]*)(\` + "`" + "`" + "`" + `)`)
 
 // RemoveCodeBlock removes code block tags from a string.

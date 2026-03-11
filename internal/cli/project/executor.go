@@ -13,25 +13,25 @@ import (
 
 // Executor handles the execution of action steps.
 type Executor struct {
-	Agent         *GeneratorAgent
-	Runtime       *shared.RuntimeContext
-	Cwd           string
-	Architecture  string
-	ProjectType   string
-	CurrentAction Action
-	CurrentParams map[string]string
+	Agent          *GeneratorAgent
+	Runtime        *shared.RuntimeContext
+	Cwd            string
+	Architecture   string
+	ProjectType    string
+	CurrentAction  Action
+	CurrentParams  map[string]string
 }
 
 // NewExecutor creates a new Executor.
 func NewExecutor(runtime *shared.RuntimeContext, cwd, arch, pType string, action Action, params map[string]string) *Executor {
 	return &Executor{
-		Agent:         NewGeneratorAgent(runtime),
-		Runtime:       runtime,
-		Cwd:           cwd,
-		Architecture:  arch,
-		ProjectType:   pType,
-		CurrentAction: action,
-		CurrentParams: params,
+		Agent:          NewGeneratorAgent(runtime),
+		Runtime:        runtime,
+		Cwd:            cwd,
+		Architecture:   arch,
+		ProjectType:    pType,
+		CurrentAction:  action,
+		CurrentParams:  params,
 	}
 }
 

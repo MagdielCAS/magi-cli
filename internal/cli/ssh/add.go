@@ -14,6 +14,7 @@ import (
 	"github.com/spf13/viper"
 )
 
+// aliasRegex is pre-compiled to avoid redundantly recompiling the regex on each loop iteration
 var aliasRegex = regexp.MustCompile("^[a-zA-Z0-9_-]+$")
 
 func addCmd() *cobra.Command {

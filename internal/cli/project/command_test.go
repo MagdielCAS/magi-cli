@@ -17,14 +17,14 @@ func TestNewProjectCmd(t *testing.T) {
 
 	// Check for expected subcommands
 	expectedParams := []string{"init", "exec", "check", "update", "redo", "list"}
-	foundCount := 0
+    foundCount := 0
 	for _, sub := range cmd.Commands() {
 		for _, expected := range expectedParams {
 			if sub.Name() == expected {
 				foundCount++
-				break
+                break
 			}
 		}
 	}
-	assert.Equal(t, len(expectedParams), foundCount, "Not all expected subcommands found")
+    assert.Equal(t, len(expectedParams), foundCount, "Not all expected subcommands found")
 }

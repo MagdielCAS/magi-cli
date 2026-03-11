@@ -52,13 +52,13 @@ func TestRunGenerateSalt(t *testing.T) {
 
 			// Read captured output
 			var buf bytes.Buffer
-			_, _ = buf.ReadFrom(r)
-			output := buf.String()
+_, _ = buf.ReadFrom(r)
+output := buf.String()
 
-			if tt.expectSkip {
-				assert.Empty(t, strings.TrimSpace(output))
-				return
-			}
+if tt.expectSkip {
+assert.Empty(t, strings.TrimSpace(output))
+return
+}
 
 			// Verify
 			lines := strings.Split(strings.TrimSpace(output), "\n")
