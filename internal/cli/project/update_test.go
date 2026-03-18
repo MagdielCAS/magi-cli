@@ -14,7 +14,7 @@ func TestNewUpdateCmd(t *testing.T) {
 	assert.NotEmpty(t, cmd.Short)
 	assert.NotEmpty(t, cmd.Long)
 	assert.NotNil(t, cmd.RunE)
-    // Check args validation
-    assert.Error(t, cmd.Args(&cobra.Command{}, []string{"a", "b"})) // Max 1 arg
-    assert.NoError(t, cmd.Args(&cobra.Command{}, []string{"a"}))
+	// Check args validation
+	assert.Error(t, cmd.Args(&cobra.Command{}, []string{"a", "b"})) // Max 1 arg
+	assert.NoError(t, cmd.Args(&cobra.Command{}, []string{"a"}))
 }
