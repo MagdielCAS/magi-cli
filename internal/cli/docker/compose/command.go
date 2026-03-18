@@ -108,11 +108,15 @@ func runCompose(ctx context.Context, autoAccept bool) {
 
 func findDockerfiles() []string {
 	var dockerfiles []string
-	filepath.Walk(".", func(path string, info os.FileInfo, err error) error {
+	// ⚡ Bolt: Replaced filepath.Walk with filepath.WalkDir.
+	// filepath.WalkDir is more efficient as it avoids calling os.Lstat on every file
+	// or directory it visits, which significantly speeds up directory traversal,
+	// especially for large project structures.
+	filepath.WalkDir(".", func(path string, d os.DirEntry, err error) error {
 		if err != nil {
 			return nil
 		}
-		if !info.IsDir() && strings.HasSuffix(info.Name(), "Dockerfile") {
+		if !d.IsDir() && strings.HasSuffix(d.Name(), "Dockerfile") {
 			// Use relative path
 			relPath, _ := filepath.Rel(".", path)
 			dockerfiles = append(dockerfiles, relPath)
