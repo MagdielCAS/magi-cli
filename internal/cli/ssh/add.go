@@ -14,6 +14,11 @@ import (
 	"github.com/spf13/viper"
 )
 
+// aliasRegex validates SSH connection aliases.
+// Performance optimization: Cached as a package-level variable to
+// avoid compiling the regular expression repeatedly in promptForAlias loop.
+var aliasRegex = regexp.MustCompile("^[a-zA-Z0-9_-]+$")
+
 func addCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "add",
@@ -78,8 +83,6 @@ func promptForAlias() (string, error) {
 	var err error
 
 	existing := viper.GetStringMap(ConfigSSHConnections)
-
-	aliasRegex := regexp.MustCompile("^[a-zA-Z0-9_-]+$")
 
 	for {
 		alias, err = pterm.DefaultInteractiveTextInput.WithDefaultText("Connection Alias").Show()
