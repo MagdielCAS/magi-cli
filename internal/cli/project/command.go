@@ -36,7 +36,7 @@ Examples:
 	cmd.AddCommand(NewCheckCmd())
 	cmd.AddCommand(NewUpdateCmd())
 	cmd.AddCommand(NewRedoCmd())
-    cmd.AddCommand(NewListCmd())
+	cmd.AddCommand(NewListCmd())
 
 	return cmd
 }
