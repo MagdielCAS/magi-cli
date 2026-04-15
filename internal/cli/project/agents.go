@@ -104,7 +104,6 @@ Return the result in strictly valid JSON format matching this schema:
 	return &result, nil
 }
 
-
 // ValidatorAgent validates and corrects the AnalysisResult.
 type ValidatorAgent struct {
 	runtime *shared.RuntimeContext
@@ -116,30 +115,30 @@ func NewValidatorAgent(runtime *shared.RuntimeContext) *ValidatorAgent {
 
 // Validate checks the analysis result for common issues and attempts to fix them via LLM.
 func (v *ValidatorAgent) Validate(result *AnalysisResult) (*AnalysisResult, error) {
-    // 1. Check for invalid steps programmaticall first to save tokens
-    needsFix := false
-    var issues []string
-    
-    for _, action := range result.Actions {
-        for i, step := range action.Steps {
-            if step.Tool == "run_command" {
-                if _, ok := step.Parameters["command"]; !ok {
-                    needsFix = true
-                    issues = append(issues, fmt.Sprintf("Action '%s' Step %d ('%s'): Missing 'command' parameter in run_command.", action.Name, i+1, step.Instruction))
-                }
-            }
-        }
-    }
-    
-    if !needsFix {
-        return result, nil
-    }
+	// 1. Check for invalid steps programmaticall first to save tokens
+	needsFix := false
+	var issues []string
 
-    // 2. Fix via LLM
-    resultJSON, _ := json.Marshal(result)
-    issuesStr := strings.Join(issues, "\n")
-    
-    systemPrompt := `You are a Strict Configuration Validator.
+	for _, action := range result.Actions {
+		for i, step := range action.Steps {
+			if step.Tool == "run_command" {
+				if _, ok := step.Parameters["command"]; !ok {
+					needsFix = true
+					issues = append(issues, fmt.Sprintf("Action '%s' Step %d ('%s'): Missing 'command' parameter in run_command.", action.Name, i+1, step.Instruction))
+				}
+			}
+		}
+	}
+
+	if !needsFix {
+		return result, nil
+	}
+
+	// 2. Fix via LLM
+	resultJSON, _ := json.Marshal(result)
+	issuesStr := strings.Join(issues, "\n")
+
+	systemPrompt := `You are a Strict Configuration Validator.
 Your task is to FIX the provided Project Analysis JSON based on the reported validity issues.
 Verify that all "run_command" steps have a "command" parameter with the actual executable shell command.
 If the "instruction" contains the command, move it to "parameters.command" and keep "instruction" as a description.
@@ -149,7 +148,7 @@ Reported Issues:
 
 Return the CORRECTED JSON strictly matching the input schema.`
 
-    userPrompt := string(resultJSON)
+	userPrompt := string(resultJSON)
 
 	service, err := llm.NewServiceBuilder(v.runtime).UseHeavyModel().Build()
 	if err != nil {
@@ -238,7 +237,7 @@ Schema:
 
 	var plan FileGenerationPlan
 	if err := json.Unmarshal([]byte(resp), &plan); err != nil {
-        // Fallback: try to find JSON block if strict JSON failed
+		// Fallback: try to find JSON block if strict JSON failed
 		return nil, fmt.Errorf("failed to parse planning response: %w (%s)", err, resp)
 	}
 
@@ -275,11 +274,11 @@ If it is a go file, include the package declaration.`, architecture, projectType
 		return nil, err
 	}
 
-    // Strip markdown code blocks if present
-    content := strings.TrimSpace(resp)
-    content = strings.TrimPrefix(content, "```go")
-    content = strings.TrimPrefix(content, "```")
-    content = strings.TrimSuffix(content, "```")
+	// Strip markdown code blocks if present
+	content := strings.TrimSpace(resp)
+	content = strings.TrimPrefix(content, "```go")
+	content = strings.TrimPrefix(content, "```")
+	content = strings.TrimSuffix(content, "```")
 
 	return &FileContent{
 		Path:    file.Path,
@@ -342,17 +341,17 @@ func NewReviewerAgent(runtime *shared.RuntimeContext) *ReviewerAgent {
 
 // ReviewCompliance checks if the project structure matches the rules.
 func (r *ReviewerAgent) ReviewCompliance(rootPath string, rulesContent string) (string, error) {
-   // 1. Get File Tree
-    // We reuse a similar file tree function or extract it to a helper. 
-    // Since getFileTree is a method of ArchitectureAgent, let's copy or refactor.
-    // For simplicity I'll duplicate the walker logic here or make it a private function in agents.go
-    // assuming I can access it if I make it a function not method, or just duplicate.
-    // Let's refactor getFileTree to be a standalone function "getFileTree" in this package.
-    
-    fileTree, err := getFileTree(rootPath)
-    if err != nil {
-        return "", err
-    }
+	// 1. Get File Tree
+	// We reuse a similar file tree function or extract it to a helper.
+	// Since getFileTree is a method of ArchitectureAgent, let's copy or refactor.
+	// For simplicity I'll duplicate the walker logic here or make it a private function in agents.go
+	// assuming I can access it if I make it a function not method, or just duplicate.
+	// Let's refactor getFileTree to be a standalone function "getFileTree" in this package.
+
+	fileTree, err := getFileTree(rootPath)
+	if err != nil {
+		return "", err
+	}
 
 	// 2. Build Prompt
 	systemPrompt := `You are an expert Software Architect.
@@ -389,7 +388,7 @@ Format the output as a bulleted list of issues.`
 	return resp, nil
 }
 
-// Helper function to be shared. 
+// Helper function to be shared.
 // I need to change ArchitectureAgent.getFileTree to use this or be this.
 func getFileTree(root string) (string, error) {
 	var sb strings.Builder
@@ -417,4 +416,3 @@ func getFileTree(root string) (string, error) {
 	})
 	return sb.String(), err
 }
-

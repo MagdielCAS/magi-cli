@@ -73,13 +73,14 @@ func addConnection() {
 	pterm.Success.Printf("Connection '%s' saved successfully!\n", alias)
 }
 
+// ⚡ BOLT OPTIMIZATION: Move regex to package level to avoid recompiling on every call.
+var aliasValidationRegex = regexp.MustCompile("^[a-zA-Z0-9_-]+$")
+
 func promptForAlias() (string, error) {
 	var alias string
 	var err error
 
 	existing := viper.GetStringMap(ConfigSSHConnections)
-
-	aliasRegex := regexp.MustCompile("^[a-zA-Z0-9_-]+$")
 
 	for {
 		alias, err = pterm.DefaultInteractiveTextInput.WithDefaultText("Connection Alias").Show()
@@ -94,7 +95,7 @@ func promptForAlias() (string, error) {
 		}
 
 		// Check for valid characters (alphanumeric, -, _)
-		if !aliasRegex.MatchString(alias) {
+		if !aliasValidationRegex.MatchString(alias) {
 			pterm.Warning.Println("Alias can only contain letters, numbers, hyphens, and underscores")
 			continue
 		}
