@@ -73,13 +73,15 @@ func addConnection() {
 	pterm.Success.Printf("Connection '%s' saved successfully!\n", alias)
 }
 
+// ⚡ Bolt Performance Optimization:
+// Pre-compiled alias regex to avoid compilation on every prompt evaluation.
+var aliasRegex = regexp.MustCompile("^[a-zA-Z0-9_-]+$")
+
 func promptForAlias() (string, error) {
 	var alias string
 	var err error
 
 	existing := viper.GetStringMap(ConfigSSHConnections)
-
-	aliasRegex := regexp.MustCompile("^[a-zA-Z0-9_-]+$")
 
 	for {
 		alias, err = pterm.DefaultInteractiveTextInput.WithDefaultText("Connection Alias").Show()
