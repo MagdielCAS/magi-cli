@@ -43,24 +43,26 @@ func (a *KeyExtractor) WaitForResults() []string {
 	return []string{} // No dependencies, runs first
 }
 
+// ⚡ Bolt Performance Optimization:
+// Pre-compiled regex patterns to avoid repeated compilation overhead.
+// Regex compilation is expensive and these patterns were previously
+// compiled 5 times on every Execute call.
+var i18nRegexPatterns = []*regexp.Regexp{
+	// t('key') or t("key")
+	regexp.MustCompile(`(?:^|[^a-zA-Z0-9_])t\((?:'([^']+)'|"([^"]+)")\)`),
+	// i18n.t('key') or i18n.t("key")
+	regexp.MustCompile(`i18n\.t\((?:'([^']+)'|"([^"]+)")\)`),
+	// $t('key') or $t("key")
+	regexp.MustCompile(`\$t\((?:'([^']+)'|"([^"]+)")\)`),
+	// <T key="key" />
+	regexp.MustCompile(`<T[^>]+key=(?:'([^']+)'|"([^"]+)")`),
+	// <T keyName="key" />
+	regexp.MustCompile(`<T[^>]+keyName=(?:'([^']+)'|"([^"]+)")`),
+}
+
 func (a *KeyExtractor) Execute(input map[string]string) (string, error) {
 	var keys []I18nKey
 	lines := strings.Split(a.diff, "\n")
-
-	// Regex patterns for different i18n usage
-	// We use two capturing groups: one for single quotes, one for double quotes
-	patterns := []*regexp.Regexp{
-		// t('key') or t("key")
-		regexp.MustCompile(`(?:^|[^a-zA-Z0-9_])t\((?:'([^']+)'|"([^"]+)")\)`),
-		// i18n.t('key') or i18n.t("key")
-		regexp.MustCompile(`i18n\.t\((?:'([^']+)'|"([^"]+)")\)`),
-		// $t('key') or $t("key")
-		regexp.MustCompile(`\$t\((?:'([^']+)'|"([^"]+)")\)`),
-		// <T key="key" />
-		regexp.MustCompile(`<T[^>]+key=(?:'([^']+)'|"([^"]+)")`),
-		// <T keyName="key" />
-		regexp.MustCompile(`<T[^>]+keyName=(?:'([^']+)'|"([^"]+)")`),
-	}
 
 	for _, line := range lines {
 		// We only care about added lines
@@ -71,7 +73,7 @@ func (a *KeyExtractor) Execute(input map[string]string) (string, error) {
 		// Remove the "+" prefix
 		content := line[1:]
 
-		for _, pattern := range patterns {
+		for _, pattern := range i18nRegexPatterns {
 			matches := pattern.FindAllStringSubmatch(content, -1)
 			for _, match := range matches {
 				// match[0] is full match
