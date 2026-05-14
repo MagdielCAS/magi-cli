@@ -26,9 +26,15 @@ type I18nKey struct {
 
 // Agent Implementations
 
+// KeyExtractor Agent
+type KeyExtractor struct {
+	diff string
+}
+
 // Regex patterns for different i18n usage
 // We use two capturing groups: one for single quotes, one for double quotes
-var i18nPatterns = []*regexp.Regexp{
+// Defined as package-level variables to avoid repeated compilation.
+var keyExtractorPatterns = []*regexp.Regexp{
 	// t('key') or t("key")
 	regexp.MustCompile(`(?:^|[^a-zA-Z0-9_])t\((?:'([^']+)'|"([^"]+)")\)`),
 	// i18n.t('key') or i18n.t("key")
@@ -39,11 +45,6 @@ var i18nPatterns = []*regexp.Regexp{
 	regexp.MustCompile(`<T[^>]+key=(?:'([^']+)'|"([^"]+)")`),
 	// <T keyName="key" />
 	regexp.MustCompile(`<T[^>]+keyName=(?:'([^']+)'|"([^"]+)")`),
-}
-
-// KeyExtractor Agent
-type KeyExtractor struct {
-	diff string
 }
 
 func NewKeyExtractor(diff string) *KeyExtractor {
@@ -60,9 +61,7 @@ func (a *KeyExtractor) WaitForResults() []string {
 
 func (a *KeyExtractor) Execute(input map[string]string) (string, error) {
 	var keys []I18nKey
-
-	// ⚡ Bolt: Performance optimization
-	// Use strings.IndexByte and manual slicing instead of strings.Split to avoid allocating a large string slice
+	// Use strings.IndexByte and manual slicing instead of strings.Split to avoid allocating a large string slice.
 	remaining := a.diff
 	for len(remaining) > 0 {
 		var line string
@@ -74,7 +73,6 @@ func (a *KeyExtractor) Execute(input map[string]string) (string, error) {
 			line = remaining
 			remaining = ""
 		}
-
 		// We only care about added lines
 		if !strings.HasPrefix(line, "+") {
 			continue
@@ -82,8 +80,7 @@ func (a *KeyExtractor) Execute(input map[string]string) (string, error) {
 
 		// Remove the "+" prefix
 		content := line[1:]
-
-		for _, pattern := range i18nPatterns {
+		for _, pattern := range keyExtractorPatterns {
 			matches := pattern.FindAllStringSubmatch(content, -1)
 			for _, match := range matches {
 				// match[0] is full match
