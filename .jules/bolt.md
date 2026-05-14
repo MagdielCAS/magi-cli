@@ -1,3 +1,7 @@
+## 2024-06-25 - Prevent regex recompilation
+**Learning:** Calling `regexp.MustCompile` inside a function body forces the regular expression to be compiled on every single invocation. This is a massive performance bottleneck for functions called frequently.
+**Action:** Always move `regexp.MustCompile` calls out of function scopes and into package-level global variables, so the regex is compiled only once at initialization. This provides a roughly 10x performance improvement (~8000 ns/op to ~880 ns/op).
+
 ## 2024-10-24 - Avoid strings.Split for simple line parsing when performance matters
 **Learning:** Found several places where `strings.Split` is used on strings (e.g., `strings.Split(a.diff, "\n")` in `KeyExtractor`). When allocating many strings, `strings.Index` and manual slicing is faster and creates fewer allocations. The memory context mentions this specifically: "Performance convention: When parsing command output for specific markers (e.g., 'HEAD branch:'), prefer using 'strings.Index' and manual slicing over 'strings.Split' or 'strings.Scanner' to minimize allocations and processing time."
 **Action:** Replace `strings.Split` with manual slicing via `strings.Index` when processing potentially large strings like diffs.
