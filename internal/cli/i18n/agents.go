@@ -61,9 +61,18 @@ func (a *KeyExtractor) WaitForResults() []string {
 
 func (a *KeyExtractor) Execute(input map[string]string) (string, error) {
 	var keys []I18nKey
-	lines := strings.Split(a.diff, "\n")
-
-	for _, line := range lines {
+	// Use strings.IndexByte and manual slicing instead of strings.Split to avoid allocating a large string slice.
+	remaining := a.diff
+	for len(remaining) > 0 {
+		var line string
+		idx := strings.IndexByte(remaining, '\n')
+		if idx >= 0 {
+			line = remaining[:idx]
+			remaining = remaining[idx+1:]
+		} else {
+			line = remaining
+			remaining = ""
+		}
 		// We only care about added lines
 		if !strings.HasPrefix(line, "+") {
 			continue
@@ -71,7 +80,6 @@ func (a *KeyExtractor) Execute(input map[string]string) (string, error) {
 
 		// Remove the "+" prefix
 		content := line[1:]
-
 		for _, pattern := range keyExtractorPatterns {
 			matches := pattern.FindAllStringSubmatch(content, -1)
 			for _, match := range matches {
