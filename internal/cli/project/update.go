@@ -84,7 +84,7 @@ Requires the file path as an argument.`,
 			// 5. Confirm and Write
 			pterm.Println()
 			pterm.DefaultSection.Println("Proposed Changes")
-			// TODO: In the future, show a helper diff here? For now, we rely on user trust/git.
+			showDiff(string(content), updatedFile.Content)
 			pterm.Info.Printf("File: %s\n", updatedFile.Path)
 			pterm.Info.Println("Content Length:", len(updatedFile.Content))
 

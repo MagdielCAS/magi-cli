@@ -122,7 +122,7 @@ func (e *Executor) handleEditFile(step ActionStep) error {
 		return fmt.Errorf("failed to generate updates: %w", err)
 	}
 
-	// Show diff (simplified) or just confirm
+	showDiff(string(contentBytes), updated.Content)
 	pterm.Info.Println("Proposed changes generated.")
 	if confirm, _ := pterm.DefaultInteractiveConfirm.Show("Apply changes to " + targetFile + "?"); confirm {
 		if err := os.WriteFile(fullPath, []byte(updated.Content), 0644); err != nil {
