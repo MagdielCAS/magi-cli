@@ -43,23 +43,32 @@ func (a *Agent) Analyze(input map[string]string) (string, error) {
 	}
 	userPrompt := userPromptBuilder.String()
 
-	// Use ServiceBuilder
-	// We default to Heavy model for agents as they usually require more reasoning
-	builder := NewServiceBuilder(a.Runtime).UseHeavyModel()
-	if a.CompletionRequest.ApiKey != "" {
-		builder.WithAPIKey(a.CompletionRequest.ApiKey)
-	}
-
-	service, err := builder.Build()
+	provider, err := ResolveProvider(a.Runtime)
 	if err != nil {
 		return "", err
 	}
 
-	req := a.CompletionRequest.ChatCompletionRequest
-	req.Messages = []ChatMessage{
-		{Role: "system", Content: systemPrompt},
-		{Role: "user", Content: userPrompt},
+	execCtx := map[string]string{
+		"system_prompt": systemPrompt,
+		"model_variant": "heavy", // Agents default to heavy reasoning model
 	}
 
-	return service.ChatCompletion(context.Background(), req)
+	if a.CompletionRequest.ApiKey != "" {
+		execCtx["api_key_override"] = a.CompletionRequest.ApiKey
+	}
+
+	resp, err := provider.Execute(context.Background(), &ExecutionRequest{
+		Capability: fmt.Sprintf("agent_%s", strings.ToLower(a.Name)),
+		Prompt:     userPrompt,
+		Context:    execCtx,
+		Options: ExecutionOptions{
+			MaxTokens:   int(a.CompletionRequest.MaxTokens),
+			Temperature: float32(a.CompletionRequest.Temperature),
+		},
+	})
+	if err != nil {
+		return "", err
+	}
+
+	return resp.Output, nil
 }

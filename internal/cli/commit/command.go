@@ -18,10 +18,11 @@ import (
 	"github.com/spf13/cobra"
 )
 
-var commitCmd = &cobra.Command{
-	Use:   "commit",
-	Short: "Generate a conventional commit message with AI and create the commit",
-	Long: `commit analyzes your local changes, lets you pick which files to include,
+var (
+	commitCmd = &cobra.Command{
+		Use:   "commit",
+		Short: "Generate a conventional commit message with AI and create the commit",
+		Long: `commit analyzes your local changes, lets you pick which files to include,
 and generates a conventional commit message using the configured AI provider.
 
 Data handling:
@@ -40,7 +41,13 @@ Examples:
 
 Security note: Requests are performed with the shared hardened HTTP client and only include
 the contextual diff needed to craft the message.`,
-	RunE: runCommit,
+		RunE: runCommit,
+	}
+	yesFlag bool
+)
+
+func init() {
+	commitCmd.Flags().BoolVarP(&yesFlag, "yes", "y", false, "Accept the generated commit message automatically without prompting")
 }
 
 func CommitCmd() *cobra.Command {
@@ -106,10 +113,14 @@ func runCommit(cmd *cobra.Command, _ []string) error {
 
 	pterm.DefaultBox.WithTitle("Suggested Commit Message").Println(message)
 
-	confirmed, err := pterm.DefaultInteractiveConfirm.WithDefaultValue(true).
-		Show("Use this commit message?")
-	if err != nil {
-		return fmt.Errorf("confirmation prompt failed: %w", err)
+	var confirmed = yesFlag
+	if !yesFlag {
+		var confirmErr error
+		confirmed, confirmErr = pterm.DefaultInteractiveConfirm.WithDefaultValue(true).
+			Show("Use this commit message?")
+		if confirmErr != nil {
+			return fmt.Errorf("confirmation prompt failed: %w", confirmErr)
+		}
 	}
 	if !confirmed {
 		pterm.Warning.Println("Commit aborted by user.")

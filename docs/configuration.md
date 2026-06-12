@@ -64,6 +64,14 @@ This command will create a `.magi.yaml` file in the current directory and automa
 - `api.light.base_url`, `api.heavy.base_url`, `api.fallback.base_url`: Optional endpoint overrides (e.g., Azure OpenAI, OpenRouter) per tier.
 - `api.light.provider`, `api.heavy.provider`, `api.fallback.provider`: Optional provider overrides per tier when different vendor slugs are required.
 
+### Intelligence Provider Settings (Since v0.9.0)
+
+You can choose what type of LLM capability/agent to use for execution. You can use standard API providers or local CLI agents (like GitHub Copilot CLI or Claude Code).
+
+- `intelligence.provider`: Selected provider. Options: `openai` (default), `custom`, `copilot_cli`, `claude_code`. If unset, falls back to `api.provider`.
+- `providers.copilot_cli.binary`: The binary/command to run Copilot CLI (defaults to `copilot`).
+- `providers.claude_code.binary`: The binary/command to run Claude Code (defaults to `claude`).
+
 ### Output Settings
 
 - `output.format`: Default output format (text|json|yaml)

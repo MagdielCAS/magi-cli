@@ -14,7 +14,6 @@ import (
 
 	openai "github.com/openai/openai-go/v3"
 	openaiShared "github.com/openai/openai-go/v3/shared"
-	"github.com/tiktoken-go/tokenizer"
 
 	"github.com/MagdielCAS/magi-cli/pkg/shared"
 )
@@ -89,52 +88,43 @@ func GenerateCommitMessage(ctx context.Context, runtime *shared.RuntimeContext, 
 	if runtime == nil {
 		return "", fmt.Errorf("runtime context is required")
 	}
-	if runtime.LightModel == "" {
-		return "", fmt.Errorf("api.heavy_model must be configured")
-	}
 
-	prompt, err := renderCommitPrompt(diff)
+	cap, err := GetCapability("generate_commit_message")
 	if err != nil {
 		return "", err
 	}
 
-	service, err := NewServiceBuilder(runtime).UseLightModel().Build()
+	provider, err := ResolveProvider(runtime)
 	if err != nil {
 		return "", err
 	}
 
-	maxTokens := 100.0
-	enc, err := tokenizer.Get(tokenizer.Cl100kBase)
-	if err != nil {
-		maxTokens = 2048
-	}
-	if enc != nil {
-		count, err := enc.Count(fmt.Sprintf("%s%s", commitSystemPrompt, prompt))
-		if err != nil {
-			count = 2048
-		}
-		// commit msg length + an estimative of prompt tokens + 10% error margin
-		maxTokens = 500 + float64(count)*1.1
-		// Hard cap to prevent excessive costs/abuse
-		if maxTokens > 4096 {
-			maxTokens = 4096
-		}
-	}
-
-	message, err := service.ChatCompletion(ctx, ChatCompletionRequest{
-		Messages: []ChatMessage{
-			{Role: "system", Content: commitSystemPrompt},
-			{Role: "user", Content: prompt},
-		},
-		Temperature:    0.0,
-		MaxTokens:      maxTokens,
-		ResponseFormat: CommitSchema,
+	prompt, err := cap.BuildPrompt(CapabilityContext{
+		Diff: diff,
 	})
 	if err != nil {
 		return "", err
 	}
 
-	return parseCommitMessage(message)
+	execCtx := map[string]string{
+		"system_prompt": cap.SystemPrompt(),
+		"model_variant": "light",
+	}
+
+	resp, err := provider.Execute(ctx, &ExecutionRequest{
+		Capability: cap.Name(),
+		Prompt:     prompt,
+		Context:    execCtx,
+		Options: ExecutionOptions{
+			Temperature: 0.0,
+			MaxTokens:   500,
+		},
+	})
+	if err != nil {
+		return "", err
+	}
+
+	return resp.Output, nil
 }
 
 func renderCommitPrompt(diff string) (string, error) {
@@ -157,34 +147,45 @@ func FixCommitMessage(ctx context.Context, runtime *shared.RuntimeContext, diff,
 	if runtime == nil {
 		return "", fmt.Errorf("runtime context is required")
 	}
-	if runtime.LightModel == "" {
-		return "", fmt.Errorf("api.heavy_model must be configured")
-	}
 
-	prompt, err := renderFixCommitPrompt(diff, previousMessage, validationErr)
+	cap, err := GetCapability("fix_commit_message")
 	if err != nil {
 		return "", err
 	}
 
-	service, err := NewServiceBuilder(runtime).UseLightModel().Build()
+	provider, err := ResolveProvider(runtime)
 	if err != nil {
 		return "", err
 	}
 
-	message, err := service.ChatCompletion(ctx, ChatCompletionRequest{
-		Messages: []ChatMessage{
-			{Role: "system", Content: commitSystemPrompt},
-			{Role: "user", Content: prompt},
-		},
-		Temperature:    0.0,
-		MaxTokens:      500,
-		ResponseFormat: CommitSchema,
+	prompt, err := cap.BuildPrompt(CapabilityContext{
+		Diff:            diff,
+		PreviousMessage: previousMessage,
+		ValidationError: formatValidationError(validationErr),
 	})
 	if err != nil {
 		return "", err
 	}
 
-	return parseCommitMessage(message)
+	execCtx := map[string]string{
+		"system_prompt": cap.SystemPrompt(),
+		"model_variant": "light",
+	}
+
+	resp, err := provider.Execute(ctx, &ExecutionRequest{
+		Capability: cap.Name(),
+		Prompt:     prompt,
+		Context:    execCtx,
+		Options: ExecutionOptions{
+			Temperature: 0.0,
+			MaxTokens:   500,
+		},
+	})
+	if err != nil {
+		return "", err
+	}
+
+	return resp.Output, nil
 }
 
 func renderFixCommitPrompt(diff, previous string, validationErr error) (string, error) {

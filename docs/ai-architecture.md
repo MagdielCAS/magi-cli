@@ -13,9 +13,47 @@ This document outlines the architecture and implementation patterns for Artifici
 
 ## Core Components (`pkg/llm`)
 
-The `pkg/llm` package provides the foundational building blocks for all AI interactions.
+The `pkg/llm` package provides the foundational building blocks for all AI interactions, structured as a pluggable **Intelligence Runtime** that separates task intents (Capabilities) from execution models (Providers).
 
-### 1. Service Builder & Model Variants
+### 1. The Provider Abstraction (`IntelligenceProvider`)
+
+All AI executions—whether REST APIs or local CLI tools—implement the `IntelligenceProvider` interface:
+
+```go
+type IntelligenceProvider interface {
+	Name() string
+	Execute(ctx context.Context, req *ExecutionRequest) (*ExecutionResponse, error)
+}
+```
+
+- **OpenAI/Custom (`OpenAIProvider`)**: Wraps API completions via the `ServiceBuilder` below, supporting model variant resolution and credential scoping.
+- **GitHub Copilot (`CopilotCLIProvider`)**: Runs local GitHub Copilot CLI prompts (`copilot -p <prompt> --silent`) non-interactively.
+- **Claude Code (`ClaudeCodeProvider`)**: Runs local Claude Code prompts (`claude -p --tools "" <prompt>`) safely with tool execution disabled.
+
+### 2. Capabilities (`Capability`)
+
+Intents/tasks are isolated into implementations of the `Capability` interface:
+
+```go
+type Capability interface {
+	Name() string
+	BuildPrompt(ctx CapabilityContext) (string, error)
+	SystemPrompt() string
+}
+```
+
+- `generate_commit_message`: Generates conventional commit message prompts from a git diff.
+- `fix_commit_message`: Incorporates validation feedback to refine messages.
+
+### 3. Registry & Resolver
+
+The `Registry` handles capability registration and dynamically resolves the active provider from configuration (reading `intelligence.provider` with fallback to `api.provider`):
+
+```go
+provider, err := llm.ResolveProvider(runtime)
+```
+
+### 4. Service Builder & Model Variants
 
 To prevent hardcoding model names and ensure consistent configuration, we use a `ServiceBuilder`. It allows commands to request a "class" of model rather than a specific one.
 
@@ -133,6 +171,9 @@ func (a *ArchitectureAgent) Analyze(rootPath string) {
 5.  **Security:**
     *   Follow the security rules in `AGENTS.md`.
     *   Do not send sensitive secrets (API keys, passwords) in prompts.
+6.  **Intelligence Runtime & Decoupled Execution (Since v0.9.0):**
+    *   If building features intended to be provider-agnostic (runnable on both API LLMs and local/CLI agents like Claude Code or Copilot CLI), route requests through the dynamic resolver `llm.ResolveProvider(runtime)` and model capabilities.
+    *   Always sanitize raw outputs from CLI agents using `llm.sanitizeCLIOutput`.
 
 ## How to Add AI to a New Command
 
@@ -146,3 +187,8 @@ func (a *ArchitectureAgent) Analyze(rootPath string) {
     *   Call the `service.ChatCompletion`.
     *   Parse and use the result.
 5.  **User Experience:** Use `pterm` to show spinners or progress indicators while the AI is "thinking".
+6.  **Alternative (Pluggable Runtime Pattern):**
+    *   If your command needs to support local CLI agents as well, define a new `llm.Capability` interface.
+    *   Register it inside `pkg/llm/registry.go`.
+    *   Resolve the active provider via `llm.ResolveProvider(runtime)`.
+    *   Run execution using `provider.Execute`.

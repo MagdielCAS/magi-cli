@@ -26,6 +26,8 @@ type RuntimeContext struct {
 	HTTPClient       *http.Client
 	AnalysisTimeout  time.Duration
 	WriterTimeout    time.Duration
+	CopilotBinary    string
+	ClaudeBinary     string
 }
 
 // ModelEndpoint describes the credentials and endpoint overrides for a specific model class.
@@ -58,17 +60,31 @@ func DefaultHTTPClient() *http.Client {
 // BuildRuntimeContext constructs a RuntimeContext from viper configuration and returns
 // actionable pointers commands can share without duplicating sensitive logic.
 func BuildRuntimeContext() (*RuntimeContext, error) {
-	apiKey := strings.TrimSpace(viper.GetString("api.key"))
-	if apiKey == "" {
-		return nil, fmt.Errorf("missing api.key in configuration")
+	provider := strings.TrimSpace(viper.GetString("intelligence.provider"))
+	if provider == "" {
+		provider = strings.TrimSpace(viper.GetString("api.provider"))
 	}
-
-	provider := strings.TrimSpace(viper.GetString("api.provider"))
 	if provider == "" {
 		provider = "openai"
 	}
 
+	apiKey := strings.TrimSpace(viper.GetString("api.key"))
+	// api.key is only strictly required if the provider is API-based (openai, custom, etc.)
+	isAPIProvider := provider == "openai" || provider == "custom"
+	if isAPIProvider && apiKey == "" {
+		return nil, fmt.Errorf("missing api.key in configuration")
+	}
+
 	globalBaseURL := strings.TrimSpace(viper.GetString("api.base_url"))
+
+	copilotBinary := strings.TrimSpace(viper.GetString("providers.copilot_cli.binary"))
+	if copilotBinary == "" {
+		copilotBinary = "copilot"
+	}
+	claudeBinary := strings.TrimSpace(viper.GetString("providers.claude_code.binary"))
+	if claudeBinary == "" {
+		claudeBinary = "claude"
+	}
 
 	ctx := &RuntimeContext{
 		Provider:   provider,
@@ -95,6 +111,8 @@ func BuildRuntimeContext() (*RuntimeContext, error) {
 		HTTPClient:      DefaultHTTPClient(),
 		AnalysisTimeout: getDurationOrDefault("agent.analysis.timeout", 5*time.Minute),
 		WriterTimeout:   getDurationOrDefault("agent.writer.timeout", 5*time.Minute),
+		CopilotBinary:   copilotBinary,
+		ClaudeBinary:    claudeBinary,
 	}
 
 	return ctx, nil
