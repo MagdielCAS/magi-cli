@@ -4,7 +4,7 @@ go 1.26
 
 require (
 	github.com/MagdielCAS/pcli v0.5.1
-	github.com/openai/openai-go/v3 v3.37.0
+	github.com/openai/openai-go/v3 v3.39.0
 	github.com/pmezard/go-difflib v1.0.1-0.20181226105442-5d4384ee4fb2
 	github.com/pterm/pterm v0.12.83
 	github.com/spf13/cobra v1.10.2
