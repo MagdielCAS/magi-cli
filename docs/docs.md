@@ -90,6 +90,11 @@ Examples:
 Security note: Requests are performed with the shared hardened HTTP client and only include
 the contextual diff needed to craft the message.
 ```
+
+## Flags
+|Flag|Usage|
+|----|-----|
+|`-y, --yes`|Accept the generated commit message automatically without prompting|
 # ... completion
 `magi completion`
 
@@ -1043,4 +1048,4 @@ Run 'magi version --help' for more information on a specific command.
 
 
 ---
-> **Documentation automatically generated with [PTerm](https://github.com/pterm/cli-template) on 25 May 2026**
+> **Documentation automatically generated with [PTerm](https://github.com/pterm/cli-template) on 12 June 2026**
